@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace SourceGenerators.FieldGenerators;
+namespace BinaryBundle.Generator.FieldGenerators;
 
 internal class FieldGeneratorPrimitive : FieldGenerator {
 

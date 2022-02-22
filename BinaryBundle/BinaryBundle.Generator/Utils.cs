@@ -5,7 +5,7 @@ using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace SourceGenerators;
+namespace BinaryBundle.Generator;
 
 internal class Utils {
 

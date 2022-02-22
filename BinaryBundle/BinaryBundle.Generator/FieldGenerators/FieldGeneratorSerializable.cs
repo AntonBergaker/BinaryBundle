@@ -5,7 +5,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace SourceGenerators.FieldGenerators;
+namespace BinaryBundle.Generator.FieldGenerators;
 
 internal class FieldGeneratorSerializable : FieldGenerator {
     public override bool TryMatch(FieldDeclarationSyntax field, FieldContext context, out TypeMethods? result) {

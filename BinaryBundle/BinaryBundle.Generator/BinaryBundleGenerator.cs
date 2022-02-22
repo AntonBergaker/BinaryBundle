@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
+using BinaryBundle.Generator.FieldGenerators;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using SourceGenerators.FieldGenerators;
 
-namespace SourceGenerators {
+namespace BinaryBundle.Generator {
 
     [Generator]
     public class BinaryBundleGenerator : ISourceGenerator {

@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace SourceGenerators;
+namespace BinaryBundle.Generator;
 
 class CodeBuilder {
     private StringBuilder builder;

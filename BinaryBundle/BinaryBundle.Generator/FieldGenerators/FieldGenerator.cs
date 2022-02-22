@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-namespace SourceGenerators.FieldGenerators;
+namespace BinaryBundle.Generator.FieldGenerators;
 
 
 abstract class FieldGenerator {

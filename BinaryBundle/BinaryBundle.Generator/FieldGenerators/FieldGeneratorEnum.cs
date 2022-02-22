@@ -4,7 +4,7 @@ using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace SourceGenerators.FieldGenerators;
+namespace BinaryBundle.Generator.FieldGenerators;
 
 internal class FieldGeneratorEnum : FieldGenerator {
     public override bool TryMatch(FieldDeclarationSyntax field, FieldContext context, out TypeMethods? result) {

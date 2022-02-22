@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BinaryBundle", "BinaryBundle\BinaryBundle.csproj", "{76332DAA-A49D-4FE5-9C3C-92F22D67C596}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BinaryBundle", "BinaryBundle\BinaryBundle.csproj", "{76332DAA-A49D-4FE5-9C3C-92F22D67C596}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{4B0038F8-AB5C-4B37-B43A-0D8DBBC99537}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "UnitTests\UnitTests.csproj", "{4B0038F8-AB5C-4B37-B43A-0D8DBBC99537}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceGenerators", "SourceGenerators\SourceGenerators.csproj", "{EC8612A0-990D-431D-BB3B-F52B2B03DBEB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BinaryBundle.Generator", "BinaryBundle.Generator\BinaryBundle.Generator.csproj", "{EC8612A0-990D-431D-BB3B-F52B2B03DBEB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

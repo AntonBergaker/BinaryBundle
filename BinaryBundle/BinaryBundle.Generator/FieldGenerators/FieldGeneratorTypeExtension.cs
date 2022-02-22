@@ -5,7 +5,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace SourceGenerators.FieldGenerators;
+namespace BinaryBundle.Generator.FieldGenerators;
 
 internal class FieldGeneratorTypeExtension : FieldGenerator {
     private Dictionary<string, (string? serializeMethod, string? deserializeMethod)> methodDictionary;
