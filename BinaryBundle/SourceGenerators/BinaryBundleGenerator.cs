@@ -14,25 +14,31 @@ namespace SourceGenerators {
         public const string InterfaceName = "BinaryBundle.ISerializable";
         public const string WriterName = "BinaryBundle.BufferWriter";
         public const string ReaderName = "BinaryBundle.BufferReader";
-
+        public const string TypeExtensionSerializationName = "BinaryBundle.BundleSerializeTypeExtension";
+        public const string TypeExtensionDeserializationName = "BinaryBundle.BundleDeserializeTypeExtension";
+        public const string IgnoreAttributeName = "BinaryBundle.BundleIgnoreAttribute";
         private class SyntaxReceiver : ISyntaxReceiver {
-            public List<TypeDeclarationSyntax> References = new();
+            public List<TypeDeclarationSyntax> ClassReferences = new();
+            public List<MethodDeclarationSyntax> MethodReferences = new();
 
             public void OnVisitSyntaxNode(SyntaxNode syntaxNode) {
                 if (syntaxNode is ClassDeclarationSyntax @class) {
-                    References.Add(@class);
+                    ClassReferences.Add(@class);
                 }
 
                 if (syntaxNode is StructDeclarationSyntax @struct) {
-                    References.Add(@struct);
+                    ClassReferences.Add(@struct);
                 }
-                
+
+                if (syntaxNode is MethodDeclarationSyntax method) {
+                    MethodReferences.Add(method);
+                }
             }
         }
 
         public void Initialize(GeneratorInitializationContext context) {
             context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
-            //Debugger.Launch();
+            Debugger.Launch();
         }
 
         public void Execute(GeneratorExecutionContext context) {
@@ -40,9 +46,56 @@ namespace SourceGenerators {
                 return;
             }
 
+            Dictionary<string, (string? serializeMethod, string? deserializeMethod)> extensionTypeMethods = new();
+
+            // Scan for all method extension types
+            foreach (MethodDeclarationSyntax method in syntaxReceiver.MethodReferences) {
+                SemanticModel model = context.Compilation.GetSemanticModel(method.SyntaxTree);
+                var methodTypeSymbol = model.GetDeclaredSymbol(method);
+                if (methodTypeSymbol == null) {
+                    continue;
+                }
+
+                bool isSerializationTypeExtension =
+                    Utils.HasAttribute(methodTypeSymbol, TypeExtensionSerializationName);
+                bool isDeserializeTypeExtension =
+                    Utils.HasAttribute(methodTypeSymbol, TypeExtensionDeserializationName);
+
+                if (isSerializationTypeExtension == false &&
+                    isDeserializeTypeExtension == false) {
+                    continue;
+                }
+
+                string typeName;
+
+                if (isSerializationTypeExtension) {
+                    typeName= methodTypeSymbol.Parameters[1].ToString();
+                }
+                else {
+                    typeName = methodTypeSymbol.ReturnType.ToString();
+                }
+
+                if (extensionTypeMethods.TryGetValue(typeName, out var methods) == false) {
+                    methods = (null, null);
+                }
+
+                string methodName = methodTypeSymbol.ToString();
+                // Remove everything after (, if you know a better way to get the full method name please let me know
+                methodName = methodName.Substring(0, methodName.IndexOf('('));
+
+                if (isSerializationTypeExtension) {
+                    methods.serializeMethod = methodName;
+                }
+                else {
+                    methods.deserializeMethod = methodName;
+                }
+
+                extensionTypeMethods[typeName] = methods;
+            }
+
             Dictionary<string, SerializableClass> serializableClasses = new();
 
-            foreach (TypeDeclarationSyntax @class in syntaxReceiver.References) {
+            foreach (TypeDeclarationSyntax @class in syntaxReceiver.ClassReferences) {
                 SemanticModel model = context.Compilation.GetSemanticModel(@class.SyntaxTree);
 
                 var classTypeSymbol = model.GetDeclaredSymbol(@class) as ITypeSymbol;
@@ -50,7 +103,7 @@ namespace SourceGenerators {
                     continue;
                 }
 
-                if (classTypeSymbol.GetAttributes().Any(x => x.AttributeClass?.ToString() == AttributeName) == false) {
+                if (Utils.HasAttribute(classTypeSymbol, AttributeName) == false) {
                     continue;
                 }
 
@@ -63,6 +116,7 @@ namespace SourceGenerators {
                 new FieldGeneratorPrimitive(),
                 new FieldGeneratorEnum(),
                 new FieldGeneratorSerializable(),
+                new FieldGeneratorTypeExtension(extensionTypeMethods),
             };
 
             foreach (var classData in serializableClasses.Values) {
@@ -81,11 +135,25 @@ namespace SourceGenerators {
                     if (member is not FieldDeclarationSyntax field) {
                         continue;
                     }
+
+                    
+                    // Check for ignore attribute
+                    if (field.AttributeLists.Count > 0) {
+                        foreach (VariableDeclaratorSyntax variable in field.Declaration.Variables) {
+                            var fieldSymbol = classData.Model.GetDeclaredSymbol(variable);
+                            if (Utils.HasAttribute(fieldSymbol, IgnoreAttributeName)) {
+                                goto outer_continue;
+                            }
+                        }
+                    }
+
                     foreach (FieldGenerator fieldGenerator in fieldGenerators) {
                         if (fieldGenerator.TryMatch(field, fieldContext, out TypeMethods? result)) {
                             fields.Add(result!);
                         }
                     }
+                    
+                    outer_continue: ;
                 }
 
                 string @namespace = typeSymbol.ContainingNamespace.ToString();

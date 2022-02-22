@@ -22,7 +22,7 @@ public partial class BinarySerializationTest {
 
     [BinaryBundle]
     partial class NestedClass {
-        public string StringField;
+        public string StringField = "";
     }
 
     [Test]
@@ -50,5 +50,83 @@ public partial class BinarySerializationTest {
         SimpleStruct deserializedStruct = TestUtils.MakeSerializedCopy(@struct);
 
         Assert.AreEqual(@struct.ByteField, deserializedStruct.ByteField);
+    }
+
+    [BinaryBundle]
+    partial class ClassWithManyTypes {
+        public bool BoolField;
+        public byte ByteField;
+        public sbyte SByteField;
+        public char CharField;
+        public decimal DecimalField;
+        public double DoubleField;
+        public float FloatField;
+        public int IntField;
+        public uint UIntField;
+        public long LongField;
+        public ulong ULongField;
+        public short ShortField;
+        public ushort UShortField;
+        public string StringField;
+    }
+
+    [Test]
+    public void TestAllPrimitiveTypes() {
+        ClassWithManyTypes @class = new() {
+            BoolField = true,
+            ByteField = 0x13,
+            SByteField = -0x13,
+            CharField = 'V',
+            DecimalField = 123.123M,
+            DoubleField = 12.1234,
+            FloatField = 156.4f,
+            IntField = 123,
+            UIntField = 125,
+            LongField = 941_126_526_183_184,
+            ULongField = 283_237_371_7817_637,
+            ShortField = 123,
+            UShortField = 821,
+            StringField = "123",
+        };
+
+        ClassWithManyTypes deserializedClass = TestUtils.MakeSerializedCopy(@class);
+
+        // Maybe I need a library for generating comparisons as well...
+        Assert.AreEqual(@class.BoolField, @deserializedClass.BoolField);
+        Assert.AreEqual(@class.ByteField, @deserializedClass.ByteField);
+        Assert.AreEqual(@class.SByteField, @deserializedClass.SByteField);
+        Assert.AreEqual(@class.CharField, @deserializedClass.CharField);
+        Assert.AreEqual(@class.DecimalField, @deserializedClass.DecimalField);
+        Assert.AreEqual(@class.DoubleField, @deserializedClass.DoubleField);
+        Assert.AreEqual(@class.FloatField, @deserializedClass.FloatField);
+        Assert.AreEqual(@class.IntField, @deserializedClass.IntField);
+        Assert.AreEqual(@class.UIntField, @deserializedClass.UIntField);
+        Assert.AreEqual(@class.LongField, @deserializedClass.LongField);
+        Assert.AreEqual(@class.ULongField, @deserializedClass.ULongField);
+        Assert.AreEqual(@class.ShortField, @deserializedClass.ShortField);
+        Assert.AreEqual(@class.UShortField, @deserializedClass.UShortField);
+        Assert.AreEqual(@class.StringField, @deserializedClass.StringField);
+    }
+
+    [BinaryBundle]
+    partial class ClassWithIgnoredFields {
+        [BundleIgnore]
+        public string IgnoredString = "";
+
+        public int IntField = 2;
+    }
+
+    [Test]
+    public void TestIgnore() {
+        ClassWithIgnoredFields @class = new() {
+            IgnoredString = "lol I sure hope I'm not set",
+            IntField = 6
+        };
+
+        ClassWithIgnoredFields deserializedClass = TestUtils.MakeSerializedCopy(@class);
+
+        Assert.AreEqual("", deserializedClass.IgnoredString);
+        Assert.AreNotEqual(@class.IgnoredString, deserializedClass.IgnoredString);
+        Assert.AreEqual(@class.IntField, deserializedClass.IntField);
     }
 }

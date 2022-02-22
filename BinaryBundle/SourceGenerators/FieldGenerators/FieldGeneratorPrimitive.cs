@@ -9,14 +9,20 @@ internal class FieldGeneratorPrimitive : FieldGenerator {
 
     // Get our types
     private static Dictionary<string, string> primitiveTypes = new() {
-        { "int", "Int32" },
-        { "short", "Int16" },
-        { "byte", "Byte" },
         { "bool", "Bool" },
-        { "string", "String" },
-        { "long", "Int64" },
-        { "float", "Float" },
+        { "byte", "Byte" },
+        { "sbyte", "SByte"},
+        { "char", "Char"},
+        { "decimal", "Decimal"},
         { "double", "Double" },
+        { "float", "Float" },
+        { "int", "Int32" },
+        { "uint", "UInt32" },
+        { "long", "Int64" },
+        { "ulong", "UInt64" },
+        { "short", "Int16" },
+        { "ushort", "UInt16" },
+        { "string", "String" },
     };
 
     public override bool TryMatch(FieldDeclarationSyntax field, FieldContext context, out TypeMethods? result) {

@@ -53,11 +53,16 @@ public class BufferReader : IDisposable {
 #endif
         }
     }
+
+    public char ReadChar() => reader.ReadChar();
+
     public long ReadInt64() => reader.ReadInt64();
 
     public ulong ReadUInt64() => reader.ReadUInt64();
 
     public int ReadInt32() => reader.ReadInt32();
+
+    public uint ReadUInt32() => reader.ReadUInt32();
 
     public short ReadInt16() => reader.ReadInt16();
 
@@ -65,9 +70,13 @@ public class BufferReader : IDisposable {
 
     public byte ReadByte() => reader.ReadByte();
 
+    public sbyte ReadSByte() => reader.ReadSByte();
+
     public bool ReadBool() => reader.ReadBoolean();
 
     public float ReadFloat() => reader.ReadSingle();
+
+    public decimal ReadDecimal() => reader.ReadDecimal();
 
     public double ReadDouble() => reader.ReadDouble();
 

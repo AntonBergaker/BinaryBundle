@@ -21,4 +21,7 @@ internal class Utils {
         return TypeImplements(typeInfo.Type, typeName);
     }
 
+    public static bool HasAttribute(ISymbol? type, string fullAttributeName) {
+        return type?.GetAttributes().Any(x => x.AttributeClass?.ToString() == fullAttributeName) ?? false;
+    }
 }

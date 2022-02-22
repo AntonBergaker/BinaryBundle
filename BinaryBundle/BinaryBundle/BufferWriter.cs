@@ -49,17 +49,25 @@ public class BufferWriter : IDisposable {
 
     public void WriteInt32(int value) => writer.Write(value);
 
+    public void WriteUInt32(uint value) => writer.Write(value);
+
     public void WriteInt16(short value) => writer.Write(value);
 
     public void WriteUInt16(ushort value) => writer.Write(value);
 
     public void WriteByte(byte value) => writer.Write(value);
 
+    public void WriteSByte(sbyte value) => writer.Write(value);
+
     public void WriteFloat(float value) => writer.Write(value);
+
+    public void WriteDecimal(decimal value) => writer.Write(value);
 
     public void WriteDouble(double value) => writer.Write(value);
 
     public void WriteBool(bool value) => writer.Write(value);
+
+    public void WriteChar(char value) => writer.Write(value);
 
     public void WriteBytes(byte[] bytes) => writer.Write(bytes);
 
