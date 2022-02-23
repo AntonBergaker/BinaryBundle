@@ -22,8 +22,8 @@ internal class FieldGeneratorSerializable : FieldGenerator {
             return false;
         }
 
-        string serialize = $"this.{fieldName}.Serialize(writer);";
-        string deserialize = $"this.{fieldName}.Deserialize(reader);";
+        string serialize = $"{fieldName}.Serialize(writer);";
+        string deserialize = $"{fieldName}.Deserialize(reader);";
 
         result = new TypeMethods(serialize, deserialize);
         return true;

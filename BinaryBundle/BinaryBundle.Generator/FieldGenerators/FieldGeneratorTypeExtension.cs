@@ -20,8 +20,8 @@ internal class FieldGeneratorTypeExtension : FieldGenerator {
             return false;
         }
 
-        string serialize = $"{methods.serializeMethod}(writer, this.{fieldName});";
-        string deserialize = $"this.{fieldName} = {methods.deserializeMethod}(reader);";
+        string serialize = $"{methods.serializeMethod}(writer, {fieldName});";
+        string deserialize = $"{fieldName} = {methods.deserializeMethod}(reader);";
 
         result = new TypeMethods(serialize, deserialize);
         return true;

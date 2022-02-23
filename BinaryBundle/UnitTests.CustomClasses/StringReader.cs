@@ -29,10 +29,6 @@ namespace UnitTests.CustomClasses {
             throw new Exception("Tried to read outside the string input");
         }
 
-        public T ReadEnum<T>() where T : Enum {
-            throw new NotImplementedException();
-        }
-
         public char ReadChar() {
             throw new NotImplementedException();
         }

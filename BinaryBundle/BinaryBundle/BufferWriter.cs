@@ -15,7 +15,6 @@ public class BufferWriter : IDisposable, IBundleWriter {
     private readonly bool managesStream;
     private readonly Stream stream;
 
-
     public BufferWriter(byte[] buffer) {
         managesStream = true;
         stream = new MemoryStream(buffer);
@@ -26,30 +25,6 @@ public class BufferWriter : IDisposable, IBundleWriter {
         managesStream = false;
         this.stream = stream;
         this.writer = new BinaryWriter(stream);
-    }
-
-    /// <summary>
-    /// Writes an enum to the buffer using the enums underlying type and advances the stream position.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="enumValue"></param>
-    public void WriteEnum<T>(T enumValue) where T : Enum {
-        if (Enum.GetUnderlyingType(typeof(T)) == typeof(byte)) {
-#if NET5_0_OR_GREATER
-            byte b = Unsafe.As<T, byte>(ref enumValue);
-#else
-            byte b = (byte)(object)enumValue;
-#endif
-            writer.Write(b);
-        }
-        else {
-#if NET5_0_OR_GREATER
-            int i = Unsafe.As<T, int>(ref enumValue);
-#else
-            int i = (int)(object)enumValue;
-#endif
-            writer.Write(i);
-        }
     }
 
     /// <summary>

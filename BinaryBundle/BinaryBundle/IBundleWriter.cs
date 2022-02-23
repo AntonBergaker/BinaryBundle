@@ -7,7 +7,6 @@ namespace BinaryBundle;
 /// Interface containing every method used by the reader inside BinaryBundle's generated Serialize method.
 /// </summary>
 public interface IBundleWriter {
-    void WriteEnum<T>(T enumValue) where T : Enum;
     void WriteString(string value);
     void WriteInt64(long value);
     void WriteUInt64(ulong value);

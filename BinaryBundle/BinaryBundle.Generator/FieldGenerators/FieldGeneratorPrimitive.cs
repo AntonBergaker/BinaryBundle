@@ -32,8 +32,8 @@ internal class FieldGeneratorPrimitive : FieldGenerator {
             return false;
         }
 
-        string serialize = $"writer.Write{methodName}(this.{fieldName});";
-        string deserialize = $"this.{fieldName} = reader.Read{methodName}();";
+        string serialize = $"writer.Write{methodName}({fieldName});";
+        string deserialize = $"{fieldName} = reader.Read{methodName}();";
 
         result = new(serialize, deserialize);
         return true;

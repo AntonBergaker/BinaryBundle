@@ -12,10 +12,6 @@ public class StringWriter : IBundleWriter {
         this.stringBuilder = new();
     }
 
-    public void WriteEnum<T>(T enumValue) where T : Enum {
-        throw new NotImplementedException();
-    }
-
     public void WriteString(string value) {
         stringBuilder.Append(value);
         stringBuilder.Append(",");

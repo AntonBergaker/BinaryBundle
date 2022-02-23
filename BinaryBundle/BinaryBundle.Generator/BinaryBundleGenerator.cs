@@ -156,7 +156,7 @@ namespace BinaryBundle.Generator {
 
             fieldGenerators.AddRange(new FieldGenerator[] {
             new FieldGeneratorPrimitive(),
-                new FieldGeneratorEnum(),
+                new FieldGeneratorEnum(fieldGenerators),
                 new FieldGeneratorSerializable(),
                 new FieldGeneratorTypeExtension(extensionTypeMethods),
                 new FieldGeneratorArray(fieldGenerators),
@@ -196,7 +196,7 @@ namespace BinaryBundle.Generator {
                     }
 
                     foreach (FieldGenerator fieldGenerator in fieldGenerators) {
-                        if (fieldGenerator.TryMatch(fieldTypeInfo, field.Declaration.Variables.First().Identifier.Text, 0, fieldContext, out TypeMethods? result)) {
+                        if (fieldGenerator.TryMatch(fieldTypeInfo, "this." + field.Declaration.Variables.First().Identifier.Text, 0, fieldContext, out TypeMethods? result)) {
                             fields.Add(result!);
                         }
                     }

@@ -59,31 +59,6 @@ public class BufferReader : IDisposable, IBundleReader {
         return Encoding.UTF8.GetString(byteList.ToArray());
     }
 
-    /// <summary>
-    /// Reads an enum from the stream with the same size as the enum's backing type.
-    /// Advances the stream the size of the enum
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <returns></returns>
-    public T ReadEnum<T>() where T : Enum {
-        if (Enum.GetUnderlyingType(typeof(T)) == typeof(byte)) {
-            byte @byte = reader.ReadByte();
-#if NET5_0_OR_GREATER
-            return Unsafe.As<byte, T>(ref @byte);
-#else
-            return (T)(object)(@byte);
-#endif
-
-        } else {
-            int @int = reader.ReadInt32();
-#if NET5_0_OR_GREATER
-            return Unsafe.As<int, T>(ref @int);
-#else
-            return (T)(object)(@int);
-#endif
-        }
-    }
-
     /// <inheritdoc cref="BinaryReader.ReadChar()"/>
     public char ReadChar() => reader.ReadChar();
 

@@ -7,7 +7,6 @@ namespace BinaryBundle;
 /// </summary>
 public interface IBundleReader {
     string ReadString();
-    T ReadEnum<T>() where T : Enum;
     char ReadChar();
     long ReadInt64();
     ulong ReadUInt64();
