@@ -6,8 +6,7 @@ using System.Threading.Tasks;
 
 namespace BinaryBundle; 
 
-public interface IBundleSerializable {
-    void Serialize(BufferWriter writer);
-
-    void Deserialize(BufferReader reader);
-}
+/// <summary>
+/// Default interface for BinaryBundle serializable classes.
+/// </summary>
+public interface IBundleSerializable : IBundleSerializableBase<BufferWriter, BufferReader> { }

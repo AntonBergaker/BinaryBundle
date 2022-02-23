@@ -20,10 +20,16 @@ abstract class FieldGenerator {
 class FieldContext {
     public readonly SemanticModel Model;
     public readonly HashSet<string> ExtraSerializableClasses;
+    public readonly string InterfaceName;
+    public readonly string WriterName;
+    public readonly string ReaderName;
 
-    public FieldContext(SemanticModel model, HashSet<string> extraSerializableClasses) {
+    public FieldContext(SemanticModel model, HashSet<string> extraSerializableClasses, string interfaceName, string writerName, string readerName) {
         Model = model;
         ExtraSerializableClasses = extraSerializableClasses;
+        InterfaceName = interfaceName;
+        WriterName = writerName;
+        ReaderName = readerName;
     }
 }
 

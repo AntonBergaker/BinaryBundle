@@ -14,7 +14,7 @@ internal class FieldGeneratorSerializable : FieldGenerator {
             return false;
         }
 
-        string typeName = BinaryBundleGenerator.InterfaceName;
+        string typeName = context.InterfaceName;
 
         if (Utils.TypeImplements(type, typeName) == false && 
             context.ExtraSerializableClasses.Contains(type.ToString()) == false) {

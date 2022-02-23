@@ -50,7 +50,8 @@ internal class FieldGeneratorArray : FieldGenerator {
                 (codeBuilder) => {
                     codeBuilder.AddLine($"writer.WriteInt16((short){fieldName}.Length);");
 
-                    codeBuilder.AddLine($"for (int i = 0; i < {fieldName}.Length; i++) {{");
+                    string indexVariable = "i" + GetDepthNr();
+                    codeBuilder.AddLine($"for (int {indexVariable} = 0; {indexVariable} < {fieldName}.Length; {indexVariable}++) {{");
                     codeBuilder.Indent();
 
                     innerTypeMethods.WriteSerializeMethod(codeBuilder);
@@ -63,7 +64,8 @@ internal class FieldGeneratorArray : FieldGenerator {
                     // So our stored field size doesn't have name conflicts, add a code block
                     codeBuilder.AddLine($"{fieldName} = BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers({fieldName}, reader.ReadInt16());");
 
-                    codeBuilder.AddLine($"for (int i = 0; i < {fieldName}.Length; i++) {{");
+                    string indexVariable = "i" + GetDepthNr();
+                    codeBuilder.AddLine($"for (int {indexVariable} = 0; {indexVariable} < {fieldName}.Length; {indexVariable}++) {{");
                     codeBuilder.Indent();
                     
                     innerTypeMethods.WriteDeserializeMethod(codeBuilder);

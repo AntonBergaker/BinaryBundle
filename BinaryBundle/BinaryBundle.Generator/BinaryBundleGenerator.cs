@@ -10,27 +10,40 @@ namespace BinaryBundle.Generator {
     [Generator]
     public class BinaryBundleGenerator : ISourceGenerator {
         public const string AttributeName = "BinaryBundle.BinaryBundleAttribute";
-        public const string InterfaceName = "BinaryBundle.IBundleSerializable";
-        public const string WriterName = "BinaryBundle.BufferWriter";
-        public const string ReaderName = "BinaryBundle.BufferReader";
-        public const string TypeExtensionSerializationName = "BinaryBundle.BundleSerializeTypeExtension";
-        public const string TypeExtensionDeserializationName = "BinaryBundle.BundleDeserializeTypeExtension";
+        public const string TypeExtensionSerializationName = "BinaryBundle.BundleSerializeTypeExtensionAttribute";
+        public const string TypeExtensionDeserializationName = "BinaryBundle.BundleDeserializeTypeExtensionAttribute";
         public const string IgnoreAttributeName = "BinaryBundle.BundleIgnoreAttribute";
+        public const string DefaultInterfaceAttributeName = "BinaryBundle.BundleDefaultInterfaceAttribute";
+        public const string DefaultInterfaceBaseName = "BinaryBundle.IBundleSerializableBase<TWriter, TReader>";
+
         private class SyntaxReceiver : ISyntaxReceiver {
             public readonly List<TypeDeclarationSyntax> ClassReferences = new();
             public readonly List<MethodDeclarationSyntax> MethodReferences = new();
+            public readonly List<InterfaceDeclarationSyntax> InterfaceReferences = new();
 
             public void OnVisitSyntaxNode(SyntaxNode syntaxNode) {
                 if (syntaxNode is ClassDeclarationSyntax @class) {
-                    ClassReferences.Add(@class);
+                    if (@class.AttributeLists.Count > 0) {
+                        ClassReferences.Add(@class);
+                    }
                 }
 
                 if (syntaxNode is StructDeclarationSyntax @struct) {
-                    ClassReferences.Add(@struct);
+                    if (@struct.AttributeLists.Count > 0) {
+                        ClassReferences.Add(@struct);
+                    }
                 }
 
                 if (syntaxNode is MethodDeclarationSyntax method) {
-                    MethodReferences.Add(method);
+                    if (method.AttributeLists.Count > 0) {
+                        MethodReferences.Add(method);
+                    }
+                }
+
+                if (syntaxNode is InterfaceDeclarationSyntax @interface) {
+                    if (@interface.AttributeLists.Count > 0) {
+                        InterfaceReferences.Add(@interface);
+                    }
                 }
             }
         }
@@ -43,6 +56,34 @@ namespace BinaryBundle.Generator {
         public void Execute(GeneratorExecutionContext context) {
             if (context.SyntaxReceiver is not SyntaxReceiver syntaxReceiver) {
                 return;
+            }
+
+            string interfaceName = "BinaryBundle.IBundleSerializable";
+            string writerName = "BinaryBundle.BufferWriter";
+            string readerName = "BinaryBundle.BufferReader";
+
+            foreach (InterfaceDeclarationSyntax @interface in syntaxReceiver.InterfaceReferences) {
+                SemanticModel model = context.Compilation.GetSemanticModel(@interface.SyntaxTree);
+
+                var classTypeSymbol = model.GetDeclaredSymbol(@interface);
+                if (classTypeSymbol == null) {
+                    continue;
+                }
+
+                if (Utils.HasAttribute(classTypeSymbol, DefaultInterfaceAttributeName) == false) {
+                    continue;
+                }
+
+                foreach (INamedTypeSymbol implementedInterface in classTypeSymbol.Interfaces) {
+                    if (implementedInterface.OriginalDefinition.ToString() == DefaultInterfaceBaseName) {
+                        interfaceName = classTypeSymbol.ToString();
+                        var types = implementedInterface.TypeArguments;
+                        writerName = types[0].ToString();
+                        readerName = types[1].ToString();
+                        break;
+                    }
+                }
+                break;
             }
 
             Dictionary<string, (string? serializeMethod, string? deserializeMethod)> extensionTypeMethods = new();
@@ -126,12 +167,12 @@ namespace BinaryBundle.Generator {
                 var classTypeSymbol = classData.Symbol;
 
                 bool inheritsSerializable = (classTypeSymbol.BaseType != null &&
-                                             (Utils.TypeImplements(classTypeSymbol.BaseType, InterfaceName) ||
+                                             (Utils.TypeImplements(classTypeSymbol.BaseType, interfaceName) ||
                                               serializableClasses.ContainsKey(classTypeSymbol.BaseType.ToString())));
 
                 List<TypeMethods> fields = new();
 
-                FieldContext fieldContext = new FieldContext(classData.Model, new(serializableClasses.Keys));
+                FieldContext fieldContext = new FieldContext(classData.Model, new(serializableClasses.Keys), interfaceName, writerName, readerName);
 
                 foreach (var member in @class.Members) {
                     if (member is not FieldDeclarationSyntax field) {
@@ -195,23 +236,23 @@ namespace BinaryBundle.Generator {
                 }
 
                 string classType = @class is ClassDeclarationSyntax ? "class" : "struct";
-                code.AddLines($"partial {classType} {@class.Identifier.Text} : {InterfaceName} {{");
+                code.AddLines($"partial {classType} {@class.Identifier.Text} : {interfaceName} {{");
                 code.Indent();
 
 
-                string writerName = $"{WriterName} writer";
+                string writerAndParameter = $"{writerName} writer";
 
                 if (inheritsSerializable) {
-                    code.AddLine($"public override void Serialize({writerName}) {{");
+                    code.AddLine($"public override void Serialize({writerAndParameter}) {{");
                     code.Indent();
                     code.AddLine($"base.Serialize(writer);");
                 }
                 else if (@class is ClassDeclarationSyntax) {
-                    code.AddLine($"public virtual void Serialize({writerName}) {{");
+                    code.AddLine($"public virtual void Serialize({writerAndParameter}) {{");
                     code.Indent();
                 }
                 else {
-                    code.AddLine($"public void Serialize({writerName}) {{");
+                    code.AddLine($"public void Serialize({writerAndParameter}) {{");
                     code.Indent();
                 }
 
@@ -222,17 +263,17 @@ namespace BinaryBundle.Generator {
                 code.Unindent();
                 code.AddLine("}");
 
-                string readerName = $"{ReaderName} reader";
+                string readerAndParameter = $"{readerName} reader";
                 if (inheritsSerializable) {
-                    code.AddLine($"public override void Deserialize({readerName}) {{");
+                    code.AddLine($"public override void Deserialize({readerAndParameter}) {{");
                     code.Indent();
                     code.AddLine($"base.Deserialize(reader);");
                 } else if (@class is ClassDeclarationSyntax) {
-                    code.AddLine($"public virtual void Deserialize({readerName}) {{");
+                    code.AddLine($"public virtual void Deserialize({readerAndParameter}) {{");
                     code.Indent();
                 }
                 else {
-                    code.AddLine($"public void Deserialize({readerName}) {{");
+                    code.AddLine($"public void Deserialize({readerAndParameter}) {{");
                     code.Indent();
                 }
 
