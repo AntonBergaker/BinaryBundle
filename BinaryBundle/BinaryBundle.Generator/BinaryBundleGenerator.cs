@@ -10,15 +10,15 @@ namespace BinaryBundle.Generator {
     [Generator]
     public class BinaryBundleGenerator : ISourceGenerator {
         public const string AttributeName = "BinaryBundle.BinaryBundleAttribute";
-        public const string InterfaceName = "BinaryBundle.ISerializable";
+        public const string InterfaceName = "BinaryBundle.IBundleSerializable";
         public const string WriterName = "BinaryBundle.BufferWriter";
         public const string ReaderName = "BinaryBundle.BufferReader";
         public const string TypeExtensionSerializationName = "BinaryBundle.BundleSerializeTypeExtension";
         public const string TypeExtensionDeserializationName = "BinaryBundle.BundleDeserializeTypeExtension";
         public const string IgnoreAttributeName = "BinaryBundle.BundleIgnoreAttribute";
         private class SyntaxReceiver : ISyntaxReceiver {
-            public List<TypeDeclarationSyntax> ClassReferences = new();
-            public List<MethodDeclarationSyntax> MethodReferences = new();
+            public readonly List<TypeDeclarationSyntax> ClassReferences = new();
+            public readonly List<MethodDeclarationSyntax> MethodReferences = new();
 
             public void OnVisitSyntaxNode(SyntaxNode syntaxNode) {
                 if (syntaxNode is ClassDeclarationSyntax @class) {
@@ -37,7 +37,7 @@ namespace BinaryBundle.Generator {
 
         public void Initialize(GeneratorInitializationContext context) {
             context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
-            Debugger.Launch();
+            //Debugger.Launch();
         }
 
         public void Execute(GeneratorExecutionContext context) {
@@ -111,20 +111,23 @@ namespace BinaryBundle.Generator {
 
             }
 
-            FieldGenerator[] fieldGenerators = {
-                new FieldGeneratorPrimitive(),
+            List<FieldGenerator> fieldGenerators = new();
+
+            fieldGenerators.AddRange(new FieldGenerator[] {
+            new FieldGeneratorPrimitive(),
                 new FieldGeneratorEnum(),
                 new FieldGeneratorSerializable(),
                 new FieldGeneratorTypeExtension(extensionTypeMethods),
-            };
+                new FieldGeneratorArray(fieldGenerators),
+            });
 
             foreach (var classData in serializableClasses.Values) {
                 var @class = classData.Declaration;
-                var typeSymbol = classData.Symbol;
+                var classTypeSymbol = classData.Symbol;
 
-                bool inheritsSerializable = (typeSymbol.BaseType != null &&
-                                             (Utils.TypeImplements(typeSymbol.BaseType, InterfaceName) ||
-                                              serializableClasses.ContainsKey(typeSymbol.BaseType.ToString())));
+                bool inheritsSerializable = (classTypeSymbol.BaseType != null &&
+                                             (Utils.TypeImplements(classTypeSymbol.BaseType, InterfaceName) ||
+                                              serializableClasses.ContainsKey(classTypeSymbol.BaseType.ToString())));
 
                 List<TypeMethods> fields = new();
 
@@ -135,7 +138,6 @@ namespace BinaryBundle.Generator {
                         continue;
                     }
 
-                    
                     // Check for ignore attribute
                     if (field.AttributeLists.Count > 0) {
                         foreach (VariableDeclaratorSyntax variable in field.Declaration.Variables) {
@@ -146,8 +148,14 @@ namespace BinaryBundle.Generator {
                         }
                     }
 
+                    var fieldTypeInfo = classData.Model.GetTypeInfo(field.Declaration.Type).Type;
+
+                    if (fieldTypeInfo == null) {
+                        continue;
+                    }
+
                     foreach (FieldGenerator fieldGenerator in fieldGenerators) {
-                        if (fieldGenerator.TryMatch(field, fieldContext, out TypeMethods? result)) {
+                        if (fieldGenerator.TryMatch(fieldTypeInfo, field.Declaration.Variables.First().Identifier.Text, fieldContext, out TypeMethods? result)) {
                             fields.Add(result!);
                         }
                     }
@@ -155,9 +163,9 @@ namespace BinaryBundle.Generator {
                     outer_continue: ;
                 }
 
-                string @namespace = typeSymbol.ContainingNamespace.ToString();
+                string @namespace = classTypeSymbol.ContainingNamespace.ToString();
 
-                string fullName = typeSymbol.ToString();
+                string fullName = classTypeSymbol.ToString();
 
                 // Get parent classes for nested classes
                 List<string> parentClasses = new();
@@ -208,7 +216,7 @@ namespace BinaryBundle.Generator {
                 }
 
                 foreach (TypeMethods methods in fields) {
-                    code.AddLine(methods.SerializeMethod);
+                    methods.WriteSerializeMethod(code);
                 }
 
                 code.Unindent();
@@ -229,7 +237,7 @@ namespace BinaryBundle.Generator {
                 }
 
                 foreach (TypeMethods methods in fields) {
-                    code.AddLine(methods.DeserializeMethod);
+                    methods.WriteDeserializeMethod(code);
                 }
 
                 code.Unindent();
@@ -248,7 +256,7 @@ namespace BinaryBundle.Generator {
                 code.Unindent();
                 code.AddLine("}");
 
-                context.AddSource(fullName, code.ToString());
+                context.AddSource(fullName+".g", code.ToString());
             }
 
 

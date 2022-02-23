@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace BinaryBundle.Generator.FieldGenerators;
 
 
 abstract class FieldGenerator {
-    public abstract bool TryMatch(FieldDeclarationSyntax field, FieldContext context, out TypeMethods? result);
+    public abstract bool TryMatch(ITypeSymbol type, string fieldName, FieldContext context, out TypeMethods? result);
     
     protected string GetFieldName(FieldDeclarationSyntax field) {
         return field.Declaration.Variables.First().Identifier.Text;
@@ -28,11 +29,19 @@ class FieldContext {
 
 class TypeMethods {
     public TypeMethods(string serialize, string deserialize) {
-        SerializeMethod = serialize;
-        DeserializeMethod = deserialize;
+        serializeMethod = (code) => code.AddLine(serialize);
+        deserializeMethod = (code) => code.AddLine(deserialize);
     }
 
-    public string DeserializeMethod { get; }
+    public TypeMethods(Action<CodeBuilder> serializeMethod, Action<CodeBuilder> deserializeMethod) {
+        this.serializeMethod = serializeMethod;
+        this.deserializeMethod = deserializeMethod;
+    }
 
-    public string SerializeMethod { get; }
+    private readonly Action<CodeBuilder> serializeMethod;
+    private readonly Action<CodeBuilder> deserializeMethod;
+
+    public void WriteSerializeMethod(CodeBuilder codeBuilder) => serializeMethod(codeBuilder);
+
+    public void WriteDeserializeMethod(CodeBuilder codeBuilder) => deserializeMethod(codeBuilder);
 }

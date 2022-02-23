@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace BinaryBundle.Generator.FieldGenerators;
@@ -25,13 +26,11 @@ internal class FieldGeneratorPrimitive : FieldGenerator {
         { "string", "String" },
     };
 
-    public override bool TryMatch(FieldDeclarationSyntax field, FieldContext context, out TypeMethods? result) {
-        if (primitiveTypes.TryGetValue(GetFieldType(field), out string methodName) == false) {
+    public override bool TryMatch(ITypeSymbol type, string fieldName, FieldContext context, out TypeMethods? result) {
+        if (primitiveTypes.TryGetValue(type.ToString(), out string methodName) == false) {
             result = null;
             return false;
         }
-
-        var fieldName = GetFieldName(field);
 
         string serialize = $"writer.Write{methodName}(this.{fieldName});";
         string deserialize = $"this.{fieldName} = reader.Read{methodName}();";

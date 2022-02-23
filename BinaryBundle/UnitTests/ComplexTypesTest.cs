@@ -32,7 +32,7 @@ internal partial class ComplexTypesTest {
     }
 
     [BinaryBundle]
-    private partial class SerializableFieldClass {
+    private partial class BundleSerializableFieldClass {
         [BinaryBundle]
         public partial class InnerClass {
             public int IntField;
@@ -43,14 +43,31 @@ internal partial class ComplexTypesTest {
 
     [Test]
     public void TestSerializableField() {
-        SerializableFieldClass @class = new() {
+        BundleSerializableFieldClass @class = new() {
             SerializableField = {
                 IntField = 5
             }
         };
 
-        SerializableFieldClass deserializedClass = TestUtils.MakeSerializedCopy(@class);
+        BundleSerializableFieldClass deserializedClass = TestUtils.MakeSerializedCopy(@class);
 
         Assert.AreEqual(@class.SerializableField.IntField, deserializedClass.SerializableField.IntField);
+    }
+
+    [BinaryBundle]
+    private partial class ArrayClass {
+        public byte[] ByteArray;
+    }
+
+    [Test]
+    public void TestArray() {
+        ArrayClass @class = new() {
+            ByteArray = new byte[] { 0x1, 0x2, 0x4 }
+        };
+
+
+        ArrayClass deserializedClass = TestUtils.MakeSerializedCopy(@class);
+
+        Assert.AreEqual(@class.ByteArray, deserializedClass.ByteArray);
     }
 }

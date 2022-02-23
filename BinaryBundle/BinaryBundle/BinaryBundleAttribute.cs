@@ -13,11 +13,8 @@ public class BundleIgnoreAttribute : Attribute {
 }
 
 [AttributeUsage(AttributeTargets.Method)]
-public class BundleSerializeTypeExtension : Attribute {
-
-}
+public class BundleSerializeTypeExtension : Attribute { }
 
 [AttributeUsage(AttributeTargets.Method)]
-public class BundleDeserializeTypeExtension : Attribute {
+public class BundleDeserializeTypeExtension : Attribute { }
 
-}

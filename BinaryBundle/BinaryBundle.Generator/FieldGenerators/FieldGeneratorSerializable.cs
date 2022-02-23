@@ -8,9 +8,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace BinaryBundle.Generator.FieldGenerators;
 
 internal class FieldGeneratorSerializable : FieldGenerator {
-    public override bool TryMatch(FieldDeclarationSyntax field, FieldContext context, out TypeMethods? result) {
-        var type = context.Model.GetTypeInfo(field.Declaration.Type).Type;
-
+    public override bool TryMatch(ITypeSymbol type, string fieldName, FieldContext context, out TypeMethods? result) {
         if (type is not { TypeKind: TypeKind.Class or TypeKind.Struct or TypeKind.Interface }) {
             result = null;
             return false;
@@ -23,8 +21,6 @@ internal class FieldGeneratorSerializable : FieldGenerator {
             result = null;
             return false;
         }
-
-        var fieldName = GetFieldName(field);
 
         string serialize = $"this.{fieldName}.Serialize(writer);";
         string deserialize = $"this.{fieldName}.Deserialize(reader);";

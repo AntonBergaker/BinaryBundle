@@ -6,18 +6,24 @@ using System.Text;
 
 namespace BinaryBundle; 
 
-public class BufferReader : IDisposable {
+public class BufferReader : IDisposable, IBundleReader {
 
     private readonly BinaryReader reader;
-    private readonly MemoryStream stream;
+
+    private readonly bool managesStream;
+    private readonly Stream stream;
 
     public int Position => (int)reader.BaseStream.Position;
 
-    public byte[] Buffer;
-
     public BufferReader(byte[] buffer) {
-        this.Buffer = buffer;
+        managesStream = true;
         stream = new MemoryStream(buffer);
+        reader = new BinaryReader(stream);
+    }
+
+    public BufferReader(Stream stream) {
+        managesStream = false;
+        this.stream = stream;
         reader = new BinaryReader(stream);
     }
 
@@ -87,7 +93,9 @@ public class BufferReader : IDisposable {
     }
 
     public void Dispose() {
-        stream.Dispose();
+        if (managesStream) {
+            stream.Dispose();
+        }
         reader.Dispose();
     }
 }

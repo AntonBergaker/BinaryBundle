@@ -12,13 +12,13 @@ internal static class TestUtils {
 
     private static readonly byte[] sharedBuffer = new byte[0xFFF];
 
-    public static T MakeSerializedCopy<T>(T instance) where T : ISerializable, new() {
+    public static T MakeSerializedCopy<T>(T instance) where T : IBundleSerializable, new() {
         BufferWriter writer = new BufferWriter(sharedBuffer);
 
         instance.Serialize(writer);
 
         T deserializedClass = new T();
-        BufferReader reader = new BufferReader(writer.Buffer);
+        BufferReader reader = new BufferReader(sharedBuffer);
         deserializedClass.Deserialize(reader);
 
         return deserializedClass;
