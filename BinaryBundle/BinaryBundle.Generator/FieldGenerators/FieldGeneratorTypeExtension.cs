@@ -14,7 +14,7 @@ internal class FieldGeneratorTypeExtension : FieldGenerator {
         this.methodDictionary = methodDictionary;
     }
 
-    public override bool TryMatch(ITypeSymbol type, string fieldName, FieldContext context, out TypeMethods? result) {
+    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, FieldContext context, out TypeMethods? result) {
         if (methodDictionary.TryGetValue(type.ToString(), out var methods) == false) {
             result = null;
             return false;

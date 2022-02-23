@@ -2,6 +2,9 @@
 
 namespace BinaryBundle;
 
+/// <summary>
+/// Interface containing every method used by the reader inside BinaryBundle's generated Deserialize method.
+/// </summary>
 public interface IBundleReader {
     string ReadString();
     T ReadEnum<T>() where T : Enum;

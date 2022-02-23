@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace BinaryBundle.Generator.FieldGenerators;
 
 internal class FieldGeneratorEnum : FieldGenerator {
-    public override bool TryMatch(ITypeSymbol type, string fieldName, FieldContext context, out TypeMethods? result) {
+    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, FieldContext context, out TypeMethods? result) {
         if (type.TypeKind != TypeKind.Enum) {
             result = null;
             return false;

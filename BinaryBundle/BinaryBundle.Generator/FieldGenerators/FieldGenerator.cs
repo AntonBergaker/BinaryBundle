@@ -6,7 +6,7 @@ namespace BinaryBundle.Generator.FieldGenerators;
 
 
 abstract class FieldGenerator {
-    public abstract bool TryMatch(ITypeSymbol type, string fieldName, FieldContext context, out TypeMethods? result);
+    public abstract bool TryMatch(ITypeSymbol type, string fieldName, int depth, FieldContext context, out TypeMethods? result);
     
     protected string GetFieldName(FieldDeclarationSyntax field) {
         return field.Declaration.Variables.First().Identifier.Text;

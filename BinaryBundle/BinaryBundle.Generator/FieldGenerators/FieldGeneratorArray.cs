@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -13,7 +14,7 @@ internal class FieldGeneratorArray : FieldGenerator {
         this.generators = generators;
     }
 
-    public override bool TryMatch(ITypeSymbol type, string fieldName, FieldContext context, out TypeMethods? result) {
+    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, FieldContext context, out TypeMethods? result) {
         var arrayType = type as IArrayTypeSymbol;
 
         if (arrayType == null) {
@@ -21,9 +22,20 @@ internal class FieldGeneratorArray : FieldGenerator {
             return false;
         }
 
+        int rank = arrayType.Rank;
+
+        string GetDepthNr() {
+            return depth == 0 ? "" : depth.ToString();
+        }
+
+        // Creates "i" for 1d arrays, "i, j" for 2d arrays etc
+        string indexVariable = rank == 1 ? "i"+GetDepthNr() :
+            string.Join(",", Enumerable.Range(0, rank).Select(x => (char)('i'+x)+GetDepthNr()) );
+
+
         TypeMethods? innerTypeMethods = null;
         foreach (FieldGenerator generator in generators) {
-            if (generator.TryMatch(arrayType.ElementType, $"{fieldName}[i]", context, out innerTypeMethods)) {
+            if (generator.TryMatch(arrayType.ElementType, $"{fieldName}[{indexVariable}]", depth + 1, context, out innerTypeMethods)) {
                 break;
             }
         }
@@ -33,37 +45,84 @@ internal class FieldGeneratorArray : FieldGenerator {
             return false;
         }
 
-        result = new(
-            (codeBuilder) => {
-                codeBuilder.AddLine($"writer.WriteInt16((short){fieldName}.Length);");
-                codeBuilder.AddLine($"for (int i = 0;i < {fieldName}.Length; i++) {{");
-                codeBuilder.Indent();
-                innerTypeMethods.WriteSerializeMethod(codeBuilder);
-                codeBuilder.Unindent();
-                codeBuilder.AddLine("}");
-            },
-            (codeBuilder) => {
-                // So our stored field size doesn't have name conflicts, add a code block
-                codeBuilder.AddLine("{");
-                codeBuilder.Indent();
-                codeBuilder.AddLine("short arrayLength = reader.ReadInt16();");
-                // If the array doesn't exist or if its size is incorrect, create it
-                codeBuilder.AddLine($"if ({fieldName} == null || {fieldName}.Length != arrayLength) {{");
-                codeBuilder.Indent();
-                codeBuilder.AddLine($"{fieldName} = new {arrayType.ElementType}[arrayLength];");
-                codeBuilder.Unindent();
-                codeBuilder.AddLine("}");
+        if (rank == 1) {
+            result = new(
+                (codeBuilder) => {
+                    codeBuilder.AddLine($"writer.WriteInt16((short){fieldName}.Length);");
 
-                codeBuilder.AddLine($"for (int i = 0;i < arrayLength; i++) {{");
-                codeBuilder.Indent();
-                innerTypeMethods.WriteDeserializeMethod(codeBuilder);
-                codeBuilder.Unindent();
-                codeBuilder.AddLine("}");
+                    codeBuilder.AddLine($"for (int i = 0; i < {fieldName}.Length; i++) {{");
+                    codeBuilder.Indent();
 
-                codeBuilder.Unindent();
-                codeBuilder.AddLine("}");
-            }
-        );
+                    innerTypeMethods.WriteSerializeMethod(codeBuilder);
+
+                    codeBuilder.Unindent();
+                    codeBuilder.AddLine("}");
+                    
+                },
+                (codeBuilder) => {
+                    // So our stored field size doesn't have name conflicts, add a code block
+                    codeBuilder.AddLine($"{fieldName} = BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers({fieldName}, reader.ReadInt16());");
+
+                    codeBuilder.AddLine($"for (int i = 0; i < {fieldName}.Length; i++) {{");
+                    codeBuilder.Indent();
+                    
+                    innerTypeMethods.WriteDeserializeMethod(codeBuilder);
+
+                    codeBuilder.Unindent();
+                    codeBuilder.AddLine("}");
+                    
+                }
+            );
+        }
+        else {
+            result = new(
+                (codeBuilder) => {
+                    for (int i = 0; i < rank; i++) {
+                        codeBuilder.AddLine($"writer.WriteInt16((short){fieldName}.GetLength({i}));");
+                    }
+
+                    for (int i = 0; i < rank; i++) {
+                        string iteratorVariable = (char)('i' + i) + GetDepthNr();
+                        codeBuilder.AddLine(
+                            $"for (int {iteratorVariable} = 0; {iteratorVariable} < {fieldName}.GetLength({i}); {iteratorVariable}++) {{");
+                        codeBuilder.Indent();
+                    }
+
+                    innerTypeMethods.WriteSerializeMethod(codeBuilder);
+
+                    for (int i = 0; i < rank; i++) {
+                        codeBuilder.Unindent();
+                        codeBuilder.AddLine("}");
+                    }
+                },
+                (codeBuilder) => {
+                    // So our stored field size doesn't have name conflicts, add a code block
+                    codeBuilder.AddLine(
+                        $"{fieldName} = BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers({fieldName},");
+                    codeBuilder.Indent();
+                    for (int i = 0; i < rank; i++) {
+                        codeBuilder.AddLine("reader.ReadInt16()" + (i + 1 == rank ? "" : ","));
+                    }
+
+                    codeBuilder.Unindent();
+                    codeBuilder.AddLine(");");
+                    
+                    for (int i = 0; i < rank; i++) {
+                        string iteratorVariable = (char)('i' + i) + GetDepthNr(); ;
+                        codeBuilder.AddLine(
+                            $"for (int {iteratorVariable} = 0; {iteratorVariable} < {fieldName}.GetLength({i}); {iteratorVariable}++) {{");
+                        codeBuilder.Indent();
+                    }
+
+                    innerTypeMethods.WriteDeserializeMethod(codeBuilder);
+
+                    for (int i = 0; i < rank; i++) {
+                        codeBuilder.Unindent();
+                        codeBuilder.AddLine("}");
+                    }
+                }
+            );
+        }
 
         return true;
     }

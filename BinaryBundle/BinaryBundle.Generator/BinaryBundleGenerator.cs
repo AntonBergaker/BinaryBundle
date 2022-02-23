@@ -155,7 +155,7 @@ namespace BinaryBundle.Generator {
                     }
 
                     foreach (FieldGenerator fieldGenerator in fieldGenerators) {
-                        if (fieldGenerator.TryMatch(fieldTypeInfo, field.Declaration.Variables.First().Identifier.Text, fieldContext, out TypeMethods? result)) {
+                        if (fieldGenerator.TryMatch(fieldTypeInfo, field.Declaration.Variables.First().Identifier.Text, 0, fieldContext, out TypeMethods? result)) {
                             fields.Add(result!);
                         }
                     }

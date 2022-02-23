@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace BinaryBundle.Generator.FieldGenerators;
 
 internal class FieldGeneratorSerializable : FieldGenerator {
-    public override bool TryMatch(ITypeSymbol type, string fieldName, FieldContext context, out TypeMethods? result) {
+    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, FieldContext context, out TypeMethods? result) {
         if (type is not { TypeKind: TypeKind.Class or TypeKind.Struct or TypeKind.Interface }) {
             result = null;
             return false;

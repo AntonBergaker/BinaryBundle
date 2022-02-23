@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "UnitTests\Unit
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BinaryBundle.Generator", "BinaryBundle.Generator\BinaryBundle.Generator.csproj", "{EC8612A0-990D-431D-BB3B-F52B2B03DBEB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests.CustomClasses", "UnitTests.CustomClasses\UnitTests.CustomClasses.csproj", "{F302EE61-F56F-4BAC-AA4A-2943FC72F4A6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{EC8612A0-990D-431D-BB3B-F52B2B03DBEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EC8612A0-990D-431D-BB3B-F52B2B03DBEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EC8612A0-990D-431D-BB3B-F52B2B03DBEB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F302EE61-F56F-4BAC-AA4A-2943FC72F4A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F302EE61-F56F-4BAC-AA4A-2943FC72F4A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F302EE61-F56F-4BAC-AA4A-2943FC72F4A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F302EE61-F56F-4BAC-AA4A-2943FC72F4A6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

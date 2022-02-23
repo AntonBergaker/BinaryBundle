@@ -5,6 +5,9 @@ using System.Runtime.CompilerServices;
 
 namespace BinaryBundle; 
 
+/// <summary>
+/// Binary stream writer for primitive .NET types.
+/// </summary>
 public class BufferWriter : IDisposable, IBundleWriter {
 
     private readonly BinaryWriter writer;
@@ -104,12 +107,21 @@ public class BufferWriter : IDisposable, IBundleWriter {
     /// <inheritdoc cref="BinaryWriter.Write(byte[], int, int)"/>
     public void WriteBytes(byte[] bytes, int offset, int count) => writer.Write(bytes, offset, count);
 
+    /// <summary>
+    /// Resets the write position to the start of the stream
+    /// </summary>
     public void ResetPosition() {
         writer.Seek(0, SeekOrigin.Begin);
     }
 
+    /// <summary>
+    /// Returns the current write index of the stream
+    /// </summary>
     public int Position => (int)writer.BaseStream.Position;
 
+    /// <summary>
+    /// Releases the BufferWriter
+    /// </summary>
     public void Dispose() {
         writer.Dispose();
         if (managesStream) {
