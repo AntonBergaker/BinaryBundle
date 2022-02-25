@@ -14,7 +14,7 @@ public class StringWriter : IBundleWriter {
 
     public void WriteString(string value) {
         stringBuilder.Append(value);
-        stringBuilder.Append(",");
+        stringBuilder.Append(',');
     }
 
     public void WriteInt64(long value) {

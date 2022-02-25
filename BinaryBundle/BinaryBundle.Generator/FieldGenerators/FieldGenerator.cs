@@ -7,13 +7,9 @@ namespace BinaryBundle.Generator.FieldGenerators;
 
 abstract class FieldGenerator {
     public abstract bool TryMatch(ITypeSymbol type, string fieldName, int depth, FieldContext context, out TypeMethods? result);
-    
-    protected string GetFieldName(FieldDeclarationSyntax field) {
-        return field.Declaration.Variables.First().Identifier.Text;
-    }
 
-    protected string GetFieldType(FieldDeclarationSyntax field) {
-        return field.Declaration.Type.ToString();
+    protected static string GetTempVariable(int depth) {
+        return depth == 0 ? "temp" : "temp" + depth;
     }
 }
 

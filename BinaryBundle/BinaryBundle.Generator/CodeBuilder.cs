@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Reflection.PortableExecutable;
+using System.Text;
 
 namespace BinaryBundle.Generator;
 
@@ -25,6 +26,21 @@ class CodeBuilder {
         foreach (string line in lines) {
             builder.AppendLine(new string('\t', indent) + line);
         }
+    }
+
+    public void StartBlock() {
+        AddLine("{");
+        Indent();
+    }
+
+    public void StartBlock(string blockStart) {
+        AddLine(blockStart + "{");
+        Indent();
+    }
+
+    public void EndBlock() {
+        Unindent();
+        AddLine("}");
     }
 
     public void Indent() {

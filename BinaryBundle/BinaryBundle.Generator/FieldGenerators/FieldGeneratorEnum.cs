@@ -26,9 +26,11 @@ internal class FieldGeneratorEnum : FieldGenerator {
             return false;
         }
 
+        string tempVariable = GetTempVariable(depth);
+
         TypeMethods? methods = null;
         foreach (FieldGenerator fieldGenerator in generators) {
-            if (fieldGenerator.TryMatch(namedType.EnumUnderlyingType, "temp", 1, context, out methods)) {
+            if (fieldGenerator.TryMatch(namedType.EnumUnderlyingType, tempVariable, 1, context, out methods)) {
                 break;
             }
         }
@@ -41,20 +43,16 @@ internal class FieldGeneratorEnum : FieldGenerator {
         string underlying = namedType.EnumUnderlyingType.ToString();
 
         result = new TypeMethods((code) => {
-            code.AddLine("{");
-            code.Indent();
-            code.AddLine($"{underlying} temp = ({underlying}){fieldName};");
+            code.StartBlock();
+            code.AddLine($"{underlying} {tempVariable} = ({underlying}){fieldName};");
             methods.WriteSerializeMethod(code);
-            code.Unindent();
-            code.AddLine("}");
+            code.EndBlock();
         }, (code) => {
-            code.AddLine("{");
-            code.Indent();
-            code.AddLine($"{underlying} temp;");
+            code.StartBlock();
+            code.AddLine($"{underlying} {tempVariable};");
             methods.WriteDeserializeMethod(code);
-            code.AddLine($"{fieldName} = ({namedType})temp;");
-            code.Unindent();
-            code.AddLine("}");
+            code.AddLine($"{fieldName} = ({namedType}){tempVariable};");
+            code.EndBlock();
         });
         return true;
     }

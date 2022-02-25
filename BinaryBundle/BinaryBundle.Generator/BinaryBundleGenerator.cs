@@ -159,6 +159,7 @@ namespace BinaryBundle.Generator {
                 new FieldGeneratorEnum(fieldGenerators),
                 new FieldGeneratorSerializable(),
                 new FieldGeneratorTypeExtension(extensionTypeMethods),
+                new FieldGeneratorList(fieldGenerators),
                 new FieldGeneratorArray(fieldGenerators),
             });
 

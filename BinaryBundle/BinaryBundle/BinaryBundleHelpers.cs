@@ -56,4 +56,23 @@ public static class BinaryBundleHelpers {
 
         return new T[dimension0Size, dimension1Size, dimension2Size];
     }
+
+    /// <summary>
+    /// Returns the provided list with the new capacity. If the provided list is null, return a new one
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="oldList"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    public static List<T> ClearListAndPrepareCapacity<T>(List<T>? oldList, int size) {
+        if (oldList == null) {
+            return new List<T>(size);
+        }
+        if (size > oldList.Capacity) {
+            oldList.Capacity = size;
+        }
+
+        oldList.Clear();
+        return oldList;
+    }
 }
