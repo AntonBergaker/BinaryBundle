@@ -1,4 +1,5 @@
 
+
 ## WORK IN PROGRESS NOT PUBLISHED YET
 
 BinaryBundle allows you to generate serialization and deserialization methods for your C# classes and structs using source generators.  
@@ -101,9 +102,34 @@ Your custom Reader and Writer types have to implement `IBundleReader` and `IBund
 To use a custom Reader and Writer, they have to implement the corresponding interfaces, `IBundleReader` and `IBundleWriter`. These interfaces require you to define methods for writing and reading all .NET primitive types. These primitive calls are used by BinaryBundle to serialize more complex types like arrays, dictionaries and the serializable objects themselves.   
 For example the code generated for serializing an array looks like this:
 ```csharp
-writer.WriteInt16((short)array.Length);
+writer.WriteByte((byte)array.Length); // (For representative purposes writes a byte here, in reality it uses 1-4 bytes depending on the size of the array)
 for (int i = 0;i < array.Length; i++) {
     writer.WriteInt32(array[i]);
 }
 ```
-BinaryBundle is made with binary data formats in mind, for this reason it's not possible to write something like JSON with this.  In the above code you'll notice there's no callback to close the array which would be necessary to serialize to a JSON list.
+BinaryBundle is made with binary data formats in mind, for this reason it's not possible to serialize to something like JSON with this.  In the above code you'll notice there's no callback to close the array which would be necessary to serialize to a JSON list.
+
+# Considerations and limitations
+
+## Reference types
+BinaryBundle does not know how to instantiate types, and can therefore not create reference types. In practice this means reference types can only exist on the top level where they can be instantiated in the constructor you write.
+
+Lists and Arrays are excepted from this, who have been manually made to support being nested inside other things for convenience. However this will allocate new objects and create garbage.
+
+## Strings
+By default strings are written in a null terminated UTF8 format. You can change this by [overriding the BufferWriter/Reader](#Using-your-own-reader-writer-and-interface). In the default implementation null strings are not supported, and will be interpreted as an empty string.
+
+## Enums
+Enums are serialized using their underlying C# type.
+```csharp
+// Serialized with an int
+enum MyEnum {
+    Field0,
+    Field1
+}
+// Serialized with a byte
+enum MyByteEnum : byte {
+    Field0,
+    Field1
+}
+```
