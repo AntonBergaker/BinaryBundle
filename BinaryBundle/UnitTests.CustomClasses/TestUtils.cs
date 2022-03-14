@@ -15,5 +15,4 @@ internal static class TestUtils {
 
         return deserializedClass;
     }
-
 }

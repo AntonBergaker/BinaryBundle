@@ -26,7 +26,7 @@ public class StringWriter : IBundleWriter {
     }
 
     public void WriteInt32(int value) {
-        throw new NotImplementedException();
+        WriteString(value.ToString());
     }
 
     public void WriteUInt32(uint value) {

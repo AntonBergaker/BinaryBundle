@@ -114,7 +114,7 @@ public static class BinaryBundleHelpers {
             return;
         }
 
-        if (size > (0x80 << (7 * 3))) {
+        if (size >= (0x1 << (7 * 4))) {
             throw new Exception("Maximum size exceeded");
         }
 

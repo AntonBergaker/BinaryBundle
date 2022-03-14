@@ -42,7 +42,7 @@ namespace UnitTests.CustomClasses {
         }
 
         public int ReadInt32() {
-            throw new NotImplementedException();
+            return int.Parse(ReadString());
         }
 
         public uint ReadUInt32() {

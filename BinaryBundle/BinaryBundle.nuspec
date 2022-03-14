@@ -3,8 +3,13 @@
 	<metadata>
 		<id>BinaryBundle</id>
 		<version>1.0.0</version>
+		<title>BinaryBundle</title>
 		<authors>AntonBergåker</authors>
-		<description>Package Description</description>
+		<description>Source generator for binary serialization for structs and classes.</description>
+		<summary>Source generator for binary serialization for structs and classes.</summary>
+		<repository type="git" url="https://github.com/AntonBergaker/BinaryBundle.git" />
+		<projectUrl>https://github.com/AntonBergaker/BinaryBundle</projectUrl>
+		<license type="expression">MIT</license>
 		<dependencies>
 			<group targetFramework="netstandard2.0" />
 		</dependencies>

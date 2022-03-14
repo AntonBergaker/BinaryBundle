@@ -71,6 +71,16 @@ internal partial class ComplexTypesTest {
         Assert.AreEqual(@class.ByteArray, deserializedClass.ByteArray);
     }
 
+    [Test]
+    public void TestHugeArray() {
+        ArrayClass @class = new() {
+            ByteArray = Enumerable.Range(0, 0xFFFF).Select(x => (byte)x).ToArray()
+        };
+
+        var deserializedClass = TestUtils.MakeSerializedCopy(@class, new byte[0xFFFFF]);
+        Assert.AreEqual(@class.ByteArray, deserializedClass.ByteArray);
+    }
+
     [BinaryBundle]
     private partial class ComplexArrayClass {
         public int[][] JaggedArray = Array.Empty<int[]>();

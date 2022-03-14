@@ -31,9 +31,13 @@ public class BufferWriter : IDisposable, IBundleWriter {
     /// Writes a UTF8 encoded null terminated string to the buffer and advances the current position in the stream according to the size of the string.
     /// </summary>
     /// <param name="value"></param>
-    public void WriteString(string value) {
-        writer.Write(Encoding.UTF8.GetBytes(value));
+    public void WriteString(string? value) {
         byte b = 0;
+        if (value == null) {
+            writer.Write(b);
+            return;
+        }
+        writer.Write(Encoding.UTF8.GetBytes(value));
         writer.Write(b);
     }
 
