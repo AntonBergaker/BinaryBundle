@@ -1,6 +1,6 @@
 
 
-## WORK IN PROGRESS NOT PUBLISHED YET
+# BinaryBundle
 
 BinaryBundle allows you to generate serialization and deserialization methods for your C# classes and structs using source generators.  
 Because the serialization methods are created at compile time, it is highly portable and efficient, as it does not rely on any reflection or any sort of runtime generation. If used correctly, BinaryBundle will not generate any additional garbage.
@@ -16,7 +16,7 @@ Currently supported types:
 # Getting started
 
 ## Importing
-TBA when released
+[Import the package to your project using NuGet.](https://www.nuget.org/packages/BinaryBundle/)
 
 ## Marking a class for serialization
 To inform BinaryBundle that it should add `Serialize()` and `Deserialize()` methods to a class or struct, mark it with the `[BinaryBundle]` attribute. The type also needs to have a `partial` modifier so that code can be added to it.  
