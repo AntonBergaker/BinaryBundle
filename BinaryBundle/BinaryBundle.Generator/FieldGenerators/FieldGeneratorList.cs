@@ -16,7 +16,7 @@ internal class FieldGeneratorList : FieldGenerator {
             return false;
         }
 
-        if (namedType.OriginalDefinition.ToString() == "System.Collections.Generic.List<T>" == false) {
+        if (namedType.OriginalDefinition.ToString() != "System.Collections.Generic.List<T>") {
             result = null;
             return false;
         }
@@ -40,7 +40,7 @@ internal class FieldGeneratorList : FieldGenerator {
 
         string sizeVariable = depth == 0 ? "size" : "size" + depth;
         result = new ((code) => {
-            code.AddLine($"writer.WriteInt16((short){fieldName}.Count);");
+            code.AddLine($"{BinaryBundleGenerator.WriteSizeMethodName}(writer, {fieldName}.Count);");
             code.StartBlock($"for (int {indexVariable} = 0; {indexVariable} < {fieldName}.Count; {indexVariable}++)");
             code.AddLine($"{innerType} {tempVariable} = {fieldName}[{indexVariable}];");
             innerTypeMethods.WriteSerializeMethod(code);
@@ -48,8 +48,8 @@ internal class FieldGeneratorList : FieldGenerator {
         }, (code) => {
             code.StartBlock();
 
-            code.AddLine($"short {sizeVariable} = reader.ReadInt16();");
-            code.AddLine($"{fieldName} = BinaryBundle.BinaryBundleHelpers.ClearListAndPrepareCapacity({fieldName}, {sizeVariable});");
+            code.AddLine($"int {sizeVariable} = {BinaryBundleGenerator.ReadSizeMethodName}(reader);");
+            code.AddLine($"BinaryBundle.BinaryBundleHelpers.ClearListAndPrepareCapacity(ref {fieldName}, {sizeVariable});");
             code.StartBlock($"for (int {indexVariable} = 0; {indexVariable} < {sizeVariable}; {indexVariable}++)");
             code.AddLine($"{innerType} {tempVariable} = default;");
             innerTypeMethods.WriteDeserializeMethod(code);

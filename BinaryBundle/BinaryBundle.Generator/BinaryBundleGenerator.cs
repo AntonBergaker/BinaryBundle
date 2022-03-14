@@ -14,7 +14,11 @@ namespace BinaryBundle.Generator {
         public const string TypeExtensionDeserializationName = "BinaryBundle.BundleDeserializeTypeExtensionAttribute";
         public const string IgnoreAttributeName = "BinaryBundle.BundleIgnoreAttribute";
         public const string DefaultInterfaceAttributeName = "BinaryBundle.BundleDefaultInterfaceAttribute";
+        
         public const string DefaultInterfaceBaseName = "BinaryBundle.IBundleSerializableBase<TWriter, TReader>";
+
+        public const string WriteSizeMethodName = "BinaryBundle.BinaryBundleHelpers.WriteCollectionSize";
+        public const string ReadSizeMethodName = "BinaryBundle.BinaryBundleHelpers.ReadCollectionSize";
 
         private class SyntaxReceiver : ISyntaxReceiver {
             public readonly List<TypeDeclarationSyntax> ClassReferences = new();
@@ -159,8 +163,9 @@ namespace BinaryBundle.Generator {
                 new FieldGeneratorEnum(fieldGenerators),
                 new FieldGeneratorSerializable(),
                 new FieldGeneratorTypeExtension(extensionTypeMethods),
-                new FieldGeneratorList(fieldGenerators),
                 new FieldGeneratorArray(fieldGenerators),
+                new FieldGeneratorList(fieldGenerators),
+                new FieldGeneratorDictionary(fieldGenerators),
             });
 
             foreach (var classData in serializableClasses.Values) {

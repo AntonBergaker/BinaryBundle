@@ -118,6 +118,7 @@ internal partial class ComplexTypesTest {
         Assert.AreEqual(@class.ScrewEverythingYouLoveArray, deserializedClass.ScrewEverythingYouLoveArray);
     }
 
+
     [BinaryBundle]
     private partial class ListClass {
         public List<int> List = new();
@@ -132,11 +133,11 @@ internal partial class ComplexTypesTest {
         ListClass @class = new() {
             List = { 13, 41, 64, 63, 85 },
             ListOfArrays = new() {
-                new[] {2, 3, 4},
-                new[] { 5, 6, 7},
+                new[] { 2, 3, 4 },
+                new[] { 5, 6, 7 },
             },
             ListOfLists = new() {
-                new() {"Kokosboll", "Vanilla", "Dorito"},
+                new() { "Kokosboll", "Vanilla", "Dorito" },
                 new() { "Dossie", "Shroomy" },
             },
         };
@@ -162,7 +163,7 @@ internal partial class ComplexTypesTest {
     [Test]
     public void TestValueTypeInList() {
         ValueTypeList @class = new() {
-            ValueTypes = new() {
+            ValueTypes = {
                 new() {
                     X = 5,
                     Y = 4,
@@ -180,5 +181,26 @@ internal partial class ComplexTypesTest {
             Assert.AreEqual(@class.ValueTypes[i].X, deserializedClass.ValueTypes[i].X);
             Assert.AreEqual(@class.ValueTypes[i].Y, deserializedClass.ValueTypes[i].Y);
         }
+    }
+
+    [BinaryBundle]
+    private partial class DictionaryClass {
+        public readonly Dictionary<string, int> Dictionary = new();
+    }
+
+    [Test]
+    public void TestDictionary() {
+        DictionaryClass @class = new() {
+            Dictionary = {
+                {"Nice", 69},
+                {"Leet", 1337},
+                {"Moe's discovery", 5318008},
+                {"Blaze", 420}
+            }
+        };
+
+        var deserializedClass = TestUtils.MakeSerializedCopy(@class);
+        Assert.AreEqual(@class.Dictionary, deserializedClass.Dictionary);
+
     }
 }

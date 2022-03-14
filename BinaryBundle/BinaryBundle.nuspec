@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+	<metadata>
+		<id>BinaryBundle</id>
+		<version>1.0.0</version>
+		<authors>AntonBergåker</authors>
+		<description>Package Description</description>
+		<dependencies>
+			<group targetFramework="netstandard2.0" />
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="BinaryBundle\bin\Debug\netstandard2.0\BinaryBundle.dll" target="lib\netstandard2.0" />
+		<file src="BinaryBundle.Generator\bin\Debug\netstandard2.0\BinaryBundle.Generator.dll" target="analyzers\dotnet\cs" />
+	</files>
+</package>

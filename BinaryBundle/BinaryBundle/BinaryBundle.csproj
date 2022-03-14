@@ -12,5 +12,4 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
-
 </Project>

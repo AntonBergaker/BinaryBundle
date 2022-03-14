@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace BinaryBundle; 
@@ -9,70 +10,124 @@ public static class BinaryBundleHelpers {
     /// Returns the provided array if their size matches with the second argument, otherwise creates a new array with the specified size
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <param name="oldArray"></param>
+    /// <param name="array"></param>
     /// <param name="size"></param>
-    /// <returns></returns>
-    public static T[] CreateArrayIfSizeDiffers<T>(T[]? oldArray, int size) {
-        if (oldArray != null && oldArray.Length == size) {
-            return oldArray;
+    public static void CreateArrayIfSizeDiffers<T>(ref T[]? array, int size) {
+        if (array != null && array.Length == size) {
+            return;
         }
-        return new T[size];
+        array = new T[size];
     }
 
     /// <summary>
     /// Returns the provided array if their size matches with the arguments, otherwise creates a new array with the specified sizes
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <param name="oldArray"></param>
+    /// <param name="array"></param>
     /// <param name="dimension0Size"></param>
     /// <param name="dimension1Size"></param>
-    /// <returns></returns>
-    public static T[,] CreateArrayIfSizeDiffers<T>(T[,]? oldArray, int dimension0Size, int dimension1Size) {
-        if (oldArray != null && 
-            oldArray.GetLength(0) == dimension0Size &&
-            oldArray.GetLength(1) == dimension1Size) {
-            return oldArray;
+    public static void CreateArrayIfSizeDiffers<T>(ref T[,]? array, int dimension0Size, int dimension1Size) {
+        if (array != null && 
+            array.GetLength(0) == dimension0Size &&
+            array.GetLength(1) == dimension1Size) {
+            return;
         }
 
-        return new T[dimension0Size, dimension1Size];
+        array = new T[dimension0Size, dimension1Size];
     }
 
     /// <summary>
     /// Returns the provided array if their size matches with the arguments, otherwise creates a new array with the specified sizes
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <param name="oldArray"></param>
+    /// <param name="array"></param>
     /// <param name="dimension0Size"></param>
     /// <param name="dimension1Size"></param>
     /// <param name="dimension2Size"></param>
-    /// <returns></returns>
-    public static T[,,] CreateArrayIfSizeDiffers<T>(T[,,]? oldArray, int dimension0Size, int dimension1Size, int dimension2Size) {
-        if (oldArray != null &&
-            oldArray.GetLength(0) == dimension0Size &&
-            oldArray.GetLength(1) == dimension1Size &&
-            oldArray.GetLength(2) == dimension2Size) {
-            return oldArray;
+    public static void CreateArrayIfSizeDiffers<T>(ref T[,,]? array, int dimension0Size, int dimension1Size, int dimension2Size) {
+        if (array != null &&
+            array.GetLength(0) == dimension0Size &&
+            array.GetLength(1) == dimension1Size &&
+            array.GetLength(2) == dimension2Size) {
+            return;
         }
 
-        return new T[dimension0Size, dimension1Size, dimension2Size];
+        array = new T[dimension0Size, dimension1Size, dimension2Size];
     }
 
     /// <summary>
-    /// Returns the provided list with the new capacity. If the provided list is null, return a new one
+    /// Returns the provided list with the new capacity. If list is null create a new one
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <param name="oldList"></param>
+    /// <param name="list"></param>
     /// <param name="size"></param>
-    /// <returns></returns>
-    public static List<T> ClearListAndPrepareCapacity<T>(List<T>? oldList, int size) {
-        if (oldList == null) {
-            return new List<T>(size);
-        }
-        if (size > oldList.Capacity) {
-            oldList.Capacity = size;
+    public static void ClearListAndPrepareCapacity<T>(ref List<T>? list, int size) {
+        if (list == null) {
+            list = new List<T>(size);
+            return;
         }
 
-        oldList.Clear();
-        return oldList;
+        if (size > list.Capacity) {
+            list.Capacity = size;
+        }
+        list.Clear();
+    }
+
+    /// <summary>
+    /// Reads the size of a collection. Reads 1-4 bytes depending on the size. Can read numbers up to 268435456.
+    /// </summary>
+    /// <param name="reader"></param>
+    /// <returns></returns>
+    public static int ReadCollectionSize(BufferReader reader) {
+        byte firstByte = reader.ReadByte();
+        // If the first byte is 0, return just the byte
+        if ((firstByte & 0b1000_0000) == 0) {
+            return firstByte;
+        }
+
+        // Store everything but the leading 1
+        int compoundSize = firstByte & 0b0111_1111;
+
+        // Read up to 3 more times
+        for (int i = 0; i < 3; i++) {
+            byte nextByte = reader.ReadByte();
+            compoundSize = (compoundSize << 7) | (nextByte & 0b0111_1111);
+            if ((nextByte & 0b1000_0000) == 0) {
+                return compoundSize;
+            }
+        }
+
+        throw new Exception("Bits indicated an illegal read past 4 bytes");
+    }
+
+    /// <summary>
+    /// Writes the number to the buffer. Writes 1-4 bytes depending on the numbers size. Can write numbers up to 268435456.
+    /// </summary>
+    /// <param name="writer"></param>
+    public static void WriteCollectionSize(BufferWriter writer, int size) {
+        // Early return for common single byte case
+        if (size < 0x80) {
+            writer.WriteByte((byte)size);
+            return;
+        }
+
+        if (size > (0x80 << (7 * 3))) {
+            throw new Exception("Maximum size exceeded");
+        }
+
+        for (int i = 3; i > 0; i--) {
+            if (size >= (1 << (7 * i))) {
+                // Get 7 bits from the number
+                byte value = (byte)(size >> (7*i));
+                // Add a leading bit to say that the value should continue to be read
+                value |= 0b1000_0000;
+                writer.WriteByte(value);
+            }
+        }
+
+
+        // Write the last one without continuation bit
+        writer.WriteByte((byte)(size & 0x7F));
+
     }
 }

@@ -9,7 +9,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "UnitTests\Unit
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BinaryBundle.Generator", "BinaryBundle.Generator\BinaryBundle.Generator.csproj", "{EC8612A0-990D-431D-BB3B-F52B2B03DBEB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests.CustomClasses", "UnitTests.CustomClasses\UnitTests.CustomClasses.csproj", "{F302EE61-F56F-4BAC-AA4A-2943FC72F4A6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests.CustomClasses", "UnitTests.CustomClasses\UnitTests.CustomClasses.csproj", "{F302EE61-F56F-4BAC-AA4A-2943FC72F4A6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{35E867BB-6320-4855-A815-C4F607BC88B4}"
+	ProjectSection(SolutionItems) = preProject
+		BinaryBundle.nuspec = BinaryBundle.nuspec
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

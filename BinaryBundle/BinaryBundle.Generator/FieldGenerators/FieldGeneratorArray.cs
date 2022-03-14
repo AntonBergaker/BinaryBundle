@@ -48,7 +48,7 @@ internal class FieldGeneratorArray : FieldGenerator {
         if (rank == 1) {
             result = new(
                 (codeBuilder) => {
-                    codeBuilder.AddLine($"writer.WriteInt16((short){fieldName}.Length);");
+                    codeBuilder.AddLine($"{BinaryBundleGenerator.WriteSizeMethodName}(writer, {fieldName}.Length);");
 
                     codeBuilder.AddLine($"for (int {indexVariable} = 0; {indexVariable} < {fieldName}.Length; {indexVariable}++) {{");
                     codeBuilder.Indent();
@@ -60,7 +60,7 @@ internal class FieldGeneratorArray : FieldGenerator {
                 },
                 (codeBuilder) => {
                     // So our stored field size doesn't have name conflicts, add a code block
-                    codeBuilder.AddLine($"{fieldName} = BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers({fieldName}, reader.ReadInt16());");
+                    codeBuilder.AddLine($"BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers(ref {fieldName}, {BinaryBundleGenerator.ReadSizeMethodName}(reader));");
 
                     codeBuilder.AddLine($"for (int {indexVariable} = 0; {indexVariable} < {fieldName}.Length; {indexVariable}++) {{");
                     codeBuilder.Indent();
@@ -77,7 +77,7 @@ internal class FieldGeneratorArray : FieldGenerator {
             result = new(
                 (codeBuilder) => {
                     for (int i = 0; i < rank; i++) {
-                        codeBuilder.AddLine($"writer.WriteInt16((short){fieldName}.GetLength({i}));");
+                        codeBuilder.AddLine($"{BinaryBundleGenerator.WriteSizeMethodName}(writer, {fieldName}.GetLength({i}));");
                     }
 
                     for (int i = 0; i < rank; i++) {
@@ -97,10 +97,10 @@ internal class FieldGeneratorArray : FieldGenerator {
                 (codeBuilder) => {
                     // So our stored field size doesn't have name conflicts, add a code block
                     codeBuilder.AddLine(
-                        $"{fieldName} = BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers({fieldName},");
+                        $"BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers(ref {fieldName},");
                     codeBuilder.Indent();
                     for (int i = 0; i < rank; i++) {
-                        codeBuilder.AddLine("reader.ReadInt16()" + (i + 1 == rank ? "" : ","));
+                        codeBuilder.AddLine($"{BinaryBundleGenerator.ReadSizeMethodName}(reader) " + (i + 1 == rank ? "" : ","));
                     }
 
                     codeBuilder.Unindent();
