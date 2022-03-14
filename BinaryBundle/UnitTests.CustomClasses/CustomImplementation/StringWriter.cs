@@ -42,7 +42,7 @@ public class StringWriter : IBundleWriter {
     }
 
     public void WriteByte(byte value) {
-        throw new NotImplementedException();
+        WriteString(value.ToString());
     }
 
     public void WriteSByte(sbyte value) {

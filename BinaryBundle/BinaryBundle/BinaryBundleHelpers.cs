@@ -78,20 +78,22 @@ public static class BinaryBundleHelpers {
     /// </summary>
     /// <param name="reader"></param>
     /// <returns></returns>
-    public static int ReadCollectionSize(BufferReader reader) {
+    public static int ReadCollectionSize(IBundleReader reader) {
         byte firstByte = reader.ReadByte();
-        // If the first byte is 0, return just the byte
+        // If the first continuation bit is 0, return the byte as is
         if ((firstByte & 0b1000_0000) == 0) {
             return firstByte;
         }
 
-        // Store everything but the leading 1
+        // Store everything but the continuation bit
         int compoundSize = firstByte & 0b0111_1111;
 
         // Read up to 3 more times
         for (int i = 0; i < 3; i++) {
             byte nextByte = reader.ReadByte();
+            // Move previous bits up and add the new bits sans their continuation bit
             compoundSize = (compoundSize << 7) | (nextByte & 0b0111_1111);
+            // If the continuation bit isn't set, number is fully read
             if ((nextByte & 0b1000_0000) == 0) {
                 return compoundSize;
             }
@@ -104,7 +106,8 @@ public static class BinaryBundleHelpers {
     /// Writes the number to the buffer. Writes 1-4 bytes depending on the numbers size. Can write numbers up to 268435456.
     /// </summary>
     /// <param name="writer"></param>
-    public static void WriteCollectionSize(BufferWriter writer, int size) {
+    /// <param name="size"></param>
+    public static void WriteCollectionSize(IBundleWriter writer, int size) {
         // Early return for common single byte case
         if (size < 0x80) {
             writer.WriteByte((byte)size);

@@ -58,7 +58,7 @@ namespace UnitTests.CustomClasses {
         }
 
         public byte ReadByte() {
-            throw new NotImplementedException();
+            return byte.Parse(ReadString());
         }
 
         public sbyte ReadSByte() {
