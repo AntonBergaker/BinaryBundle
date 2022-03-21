@@ -1,5 +1,6 @@
 
 
+
 # BinaryBundle
 
 BinaryBundle allows you to generate serialization and deserialization methods for your C# classes and structs using source generators.  
@@ -11,6 +12,7 @@ Currently supported types:
 * All .NET primitive types
 * Arrays, both jagged and multidimensional
 * Enums
+* Properties and fields
 * Lists and dictionaries
 
 # Getting started
@@ -46,7 +48,7 @@ Console.WriteLine(deserializedClass.IntField); // 42
 ```
 
 ## Serializable fields
-If any fields implement the IBundleSerializable, either manually or from the generator, the serialization methods will be called on them as well. The `IBundleSerializable` type will not be instantiated by the deserialization method, make sure it's created before `Deserialize` is called!
+If any fields have types that implement the IBundleSerializable, either manually or from the generator, the serialization methods will be called on them as well. The `IBundleSerializable` type will not be instantiated by the deserialization method, make sure it's created before `Deserialize` is called!
 ```csharp
 [BinaryBundle]
 public partial class NestedClass {
@@ -115,6 +117,22 @@ BinaryBundle is made with binary data formats in mind, for this reason it's not 
 BinaryBundle does not know how to instantiate types, and can therefore not create reference types. In practice this means reference types can only exist on the top level where they can be instantiated in the constructor you write.
 
 Lists and Arrays are excepted from this, who have been manually made to support being nested inside other things for convenience. However this will allocate new objects and create garbage.
+
+## Properties
+BinaryBundle will serialize properties only if they are auto properties. If the property has a get or set implementation it will not be serialized.
+```csharp
+[BinaryBundle]
+partial class MyClass {
+    // This property will be serialized
+    int AutoProperty { get; set; }
+
+	// This field will be serialized
+    int backedProperty;
+    // This property is not serialized, since it's data already exists in backedProperty
+    int BackedProperty { get => backedProperty; set => backedProperty = value; }
+}
+```
+
 
 ## Strings
 By default strings are written in a null terminated UTF8 format. You can change this by [overriding the BufferWriter/Reader](#Using-your-own-reader-writer-and-interface). In the default implementation null strings are not supported, and will be interpreted as an empty string.
