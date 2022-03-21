@@ -124,12 +124,14 @@ BinaryBundle will serialize properties only if they are auto properties. If the 
 [BinaryBundle]
 partial class MyClass {
     // This property will be serialized
-    int AutoProperty { get; set; }
+    public int AutoProperty { get; set; }
+    // This property will also be serialized
+    public int AutoPrivateProperty { get; private set; }
 
-	// This field will be serialized
-    int backedProperty;
+    // This field will be serialized
+    private int backedProperty;
     // This property is not serialized, since it's data already exists in backedProperty
-    int BackedProperty { get => backedProperty; set => backedProperty = value; }
+    public int BackedProperty { get => backedProperty; set => backedProperty = value; }
 }
 ```
 
