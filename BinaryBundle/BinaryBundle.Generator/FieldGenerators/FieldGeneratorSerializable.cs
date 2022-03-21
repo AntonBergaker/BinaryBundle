@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace BinaryBundle.Generator.FieldGenerators;
 
 internal class FieldGeneratorSerializable : FieldGenerator {
-    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, FieldContext context, out TypeMethods? result) {
+    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, bool isAccessor, FieldContext context, out TypeMethods? result) {
         if (type is not { TypeKind: TypeKind.Class or TypeKind.Struct or TypeKind.Interface }) {
             result = null;
             return false;
@@ -22,8 +22,19 @@ internal class FieldGeneratorSerializable : FieldGenerator {
             return false;
         }
 
-        string serialize = $"{fieldName}.Serialize(writer);";
-        string deserialize = $"{fieldName}.Deserialize(reader);";
+        var serialize = (CodeBuilder code) => code.AddLine($"{fieldName}.Serialize(writer);");
+        var deserialize = (CodeBuilder code) => code.AddLine($"{fieldName}.Deserialize(reader);");
+
+        if (isAccessor && type.IsValueType) {
+            string tempVariable = GetTempVariable(depth);
+            deserialize = (code) => {
+                code.StartBlock();
+                code.AddLine($"{type} {tempVariable} = default;");
+                code.AddLine($"{tempVariable}.Deserialize(reader);");
+                code.AddLine($"{fieldName} = {tempVariable};");
+                code.EndBlock();
+            };
+        }
 
         result = new TypeMethods(serialize, deserialize);
         return true;

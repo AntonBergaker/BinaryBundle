@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace BinaryBundle.Generator.FieldGenerators;
 
 
 abstract class FieldGenerator {
-    public abstract bool TryMatch(ITypeSymbol type, string fieldName, int depth, FieldContext context, out TypeMethods? result);
+    public abstract bool TryMatch(ITypeSymbol type, string fieldName, int depth, bool isAccessor, FieldContext context, out TypeMethods? result);
 
     protected static string GetTempVariable(int depth) {
         return depth == 0 ? "temp" : "temp" + depth;

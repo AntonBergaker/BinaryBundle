@@ -10,7 +10,7 @@ internal class FieldGeneratorDictionary : FieldGenerator {
         this.generators = generators;
     }
 
-    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, FieldContext context, out TypeMethods? result) {
+    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, bool isAccessor, FieldContext context, out TypeMethods? result) {
         if (type is not INamedTypeSymbol namedType) {
             result = null;
             return false;
@@ -28,7 +28,7 @@ internal class FieldGeneratorDictionary : FieldGenerator {
         TypeMethods? innerKeyMethods = null;
         ITypeSymbol innerKeyType = namedType.TypeArguments[0];
         foreach (FieldGenerator generator in generators) {
-            if (generator.TryMatch(innerKeyType, keyTempVariable, depth + 1, context, out innerKeyMethods)) {
+            if (generator.TryMatch(innerKeyType, keyTempVariable, depth + 1, false, context, out innerKeyMethods)) {
                 break;
             }
         }
@@ -37,7 +37,7 @@ internal class FieldGeneratorDictionary : FieldGenerator {
         TypeMethods? innerValueMethods = null;
         ITypeSymbol innerValueType = namedType.TypeArguments[1];
         foreach (FieldGenerator generator in generators) {
-            if (generator.TryMatch(innerValueType, valueTempVariable, depth + 1, context, out innerValueMethods)) {
+            if (generator.TryMatch(innerValueType, valueTempVariable, depth + 1, false, context, out innerValueMethods)) {
                 break;
             }
         }

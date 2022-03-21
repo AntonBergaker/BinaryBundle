@@ -185,6 +185,7 @@ namespace BinaryBundle.Generator {
                     MemberDeclarationSyntax? memberSyntax = null;
                     string variableName = "";
                     ITypeSymbol? fieldTypeInfo = null;
+                    bool isAccessor = false;
 
                     if (member is FieldDeclarationSyntax field) {
                         // Check for ignore attribute
@@ -219,6 +220,7 @@ namespace BinaryBundle.Generator {
                             }
                         }
 
+                        isAccessor = true;
                         memberSyntax = property;
                         variableName = property.Identifier.Text;
                         fieldTypeInfo = classData.Model.GetTypeInfo(property.Type).Type;
@@ -230,7 +232,7 @@ namespace BinaryBundle.Generator {
 
 
                     foreach (FieldGenerator fieldGenerator in fieldGenerators) {
-                        if (fieldGenerator.TryMatch(fieldTypeInfo, "this." + variableName, 0, fieldContext, out TypeMethods? result)) {
+                        if (fieldGenerator.TryMatch(fieldTypeInfo, "this." + variableName, 0, isAccessor, fieldContext, out TypeMethods? result)) {
                             fields.Add(result!);
                         }
                     }

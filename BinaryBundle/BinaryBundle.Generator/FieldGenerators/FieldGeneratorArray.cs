@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -14,7 +13,7 @@ internal class FieldGeneratorArray : FieldGenerator {
         this.generators = generators;
     }
 
-    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, FieldContext context, out TypeMethods? result) {
+    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, bool isAccessor, FieldContext context, out TypeMethods? result) {
         var arrayType = type as IArrayTypeSymbol;
 
         if (arrayType == null) {
@@ -35,7 +34,7 @@ internal class FieldGeneratorArray : FieldGenerator {
 
         TypeMethods? innerTypeMethods = null;
         foreach (FieldGenerator generator in generators) {
-            if (generator.TryMatch(arrayType.ElementType, $"{fieldName}[{indexVariable}]", depth + 1, context, out innerTypeMethods)) {
+            if (generator.TryMatch(arrayType.ElementType, $"{fieldName}[{indexVariable}]", depth + 1, false, context, out innerTypeMethods)) {
                 break;
             }
         }

@@ -86,4 +86,26 @@ internal partial class PropertiesTest {
 
         Assert.AreEqual(@class.IntProperty, deserializedClass.IntProperty);
     }
+
+    [BinaryBundle]
+    partial class StructInProperty {
+        [BinaryBundle]
+        public partial struct ValueType {
+            public int IntField;
+        }
+
+        public ValueType Value { get; set; }
+    }
+
+    [Test]
+    public void TestStructInProperty() {
+        StructInProperty @class = new() {
+            Value = new() {
+                IntField = 6
+            }
+        };
+
+        var deserializedClass = TestUtils.MakeSerializedCopy(@class);
+        Assert.AreEqual(@class.Value.IntField, deserializedClass.Value.IntField);
+    }
 }

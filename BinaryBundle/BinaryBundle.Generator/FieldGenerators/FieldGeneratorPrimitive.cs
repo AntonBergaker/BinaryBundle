@@ -26,7 +26,7 @@ internal class FieldGeneratorPrimitive : FieldGenerator {
         { "string", "String" },
     };
 
-    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, FieldContext context, out TypeMethods? result) {
+    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, bool isAccessor, FieldContext context, out TypeMethods? result) {
         if (primitiveTypes.TryGetValue(type.ToString(), out string methodName) == false) {
             result = null;
             return false;

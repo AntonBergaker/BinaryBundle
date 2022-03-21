@@ -13,7 +13,7 @@ internal class FieldGeneratorEnum : FieldGenerator {
         this.generators = generators;
     }
 
-    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, FieldContext context, out TypeMethods? result) {
+    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, bool isAccessor, FieldContext context, out TypeMethods? result) {
         if (type.TypeKind != TypeKind.Enum) {
             result = null;
             return false;
@@ -30,7 +30,7 @@ internal class FieldGeneratorEnum : FieldGenerator {
 
         TypeMethods? methods = null;
         foreach (FieldGenerator fieldGenerator in generators) {
-            if (fieldGenerator.TryMatch(namedType.EnumUnderlyingType, tempVariable, 1, context, out methods)) {
+            if (fieldGenerator.TryMatch(namedType.EnumUnderlyingType, tempVariable, depth + 1, false, context, out methods)) {
                 break;
             }
         }

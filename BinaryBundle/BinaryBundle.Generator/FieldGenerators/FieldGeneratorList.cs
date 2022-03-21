@@ -10,7 +10,7 @@ internal class FieldGeneratorList : FieldGenerator {
         this.generators = generators;
     }
 
-    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, FieldContext context, out TypeMethods? result) {
+    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, bool isAccessor, FieldContext context, out TypeMethods? result) {
         if (type is not INamedTypeSymbol namedType) {
             result = null;
             return false;
@@ -28,7 +28,7 @@ internal class FieldGeneratorList : FieldGenerator {
         ITypeSymbol innerType = namedType.TypeArguments[0];
 
         foreach (FieldGenerator generator in generators) {
-            if (generator.TryMatch(innerType, tempVariable, depth + 1, context, out innerTypeMethods)) {
+            if (generator.TryMatch(innerType, tempVariable, depth + 1, false, context, out innerTypeMethods)) {
                 break;
             }
         }
