@@ -181,28 +181,56 @@ namespace BinaryBundle.Generator {
                 FieldContext fieldContext = new FieldContext(classData.Model, new(serializableClasses.Keys), interfaceName, writerName, readerName);
 
                 foreach (var member in @class.Members) {
-                    if (member is not FieldDeclarationSyntax field) {
-                        continue;
-                    }
 
-                    // Check for ignore attribute
-                    if (field.AttributeLists.Count > 0) {
-                        foreach (VariableDeclaratorSyntax variable in field.Declaration.Variables) {
-                            var fieldSymbol = classData.Model.GetDeclaredSymbol(variable);
-                            if (Utils.HasAttribute(fieldSymbol, IgnoreAttributeName)) {
-                                goto outer_continue;
+                    MemberDeclarationSyntax? memberSyntax = null;
+                    string variableName = "";
+                    ITypeSymbol? fieldTypeInfo = null;
+
+                    if (member is FieldDeclarationSyntax field) {
+                        // Check for ignore attribute
+                        if (field.AttributeLists.Count > 0) {
+                            foreach (VariableDeclaratorSyntax variable in field.Declaration.Variables) {
+                                var fieldSymbol = classData.Model.GetDeclaredSymbol(variable);
+                                if (Utils.HasAttribute(fieldSymbol, IgnoreAttributeName)) {
+                                    goto outer_continue;
+                                }
                             }
                         }
+
+                        fieldTypeInfo = classData.Model.GetTypeInfo(field.Declaration.Type).Type;
+                        memberSyntax = field;
+                        variableName = field.Declaration.Variables.First().Identifier.Text;
                     }
 
-                    var fieldTypeInfo = classData.Model.GetTypeInfo(field.Declaration.Type).Type;
+                    if (member is PropertyDeclarationSyntax property) {
+                        var propertySymbol = classData.Model.GetDeclaredSymbol(property);
 
-                    if (fieldTypeInfo == null) {
+                        if (Utils.HasAttribute(propertySymbol, IgnoreAttributeName)) {
+                            continue;
+                        }
+
+                        // Ignore properties that aren't auto-implemented.
+                        // We know they are auto-implemented if the setter or getter contains a body
+                        if (property.AccessorList != null) {
+                            foreach (var accessor in property.AccessorList.Accessors) {
+                                if (accessor.Body != null || accessor.ExpressionBody != null) {
+                                    goto outer_continue;
+                                }
+                            }
+                        }
+
+                        memberSyntax = property;
+                        variableName = property.Identifier.Text;
+                        fieldTypeInfo = classData.Model.GetTypeInfo(property.Type).Type;
+                    }
+
+                    if (memberSyntax == null || fieldTypeInfo == null) {
                         continue;
                     }
 
+
                     foreach (FieldGenerator fieldGenerator in fieldGenerators) {
-                        if (fieldGenerator.TryMatch(fieldTypeInfo, "this." + field.Declaration.Variables.First().Identifier.Text, 0, fieldContext, out TypeMethods? result)) {
+                        if (fieldGenerator.TryMatch(fieldTypeInfo, "this." + variableName, 0, fieldContext, out TypeMethods? result)) {
                             fields.Add(result!);
                         }
                     }
