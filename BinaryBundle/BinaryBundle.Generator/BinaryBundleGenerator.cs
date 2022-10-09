@@ -54,7 +54,6 @@ namespace BinaryBundle.Generator {
 
         public void Initialize(GeneratorInitializationContext context) {
             context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
-            //Debugger.Launch();
         }
 
         public void Execute(GeneratorExecutionContext context) {
@@ -207,6 +206,11 @@ namespace BinaryBundle.Generator {
                         var propertySymbol = classData.Model.GetDeclaredSymbol(property);
 
                         if (Utils.HasAttribute(propertySymbol, IgnoreAttributeName)) {
+                            continue;
+                        }
+
+                        // Is expression bodied, skip
+                        if (property.ExpressionBody != null) {
                             continue;
                         }
 

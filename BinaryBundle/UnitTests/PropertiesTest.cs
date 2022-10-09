@@ -1,5 +1,6 @@
 ﻿using BinaryBundle;
 using NUnit.Framework;
+using System.Reflection;
 
 namespace UnitTests; 
 
@@ -107,5 +108,19 @@ internal partial class PropertiesTest {
 
         var deserializedClass = TestUtils.MakeSerializedCopy(@class);
         Assert.AreEqual(@class.Value.IntField, deserializedClass.Value.IntField);
+    }
+
+
+    [BinaryBundle]
+    partial class ReadOnlyPropertyClass {
+        public int MyInt => 1;
+    }
+
+    [Test]
+    public void TestGetOnlyProperty() {
+        ReadOnlyPropertyClass @class = new();
+
+        var deserializedClass = TestUtils.MakeSerializedCopy(@class);
+        Assert.AreEqual(1, deserializedClass.MyInt);
     }
 }
