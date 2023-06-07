@@ -38,4 +38,17 @@ public class BundleDeserializeTypeExtensionAttribute : Attribute { }
 /// The Reader and Writer will be used as the classes used as parameters for any generated <see cref="IBundleSerializableBase{TWriter,TReader}.Serialize"/> and <see cref="IBundleSerializableBase{TWriter,TReader}.Deserialize"/> methods
 /// </summary>
 [AttributeUsage(AttributeTargets.Interface)]
-public class BundleDefaultInterfaceAttribute : Attribute { }
+public class BundleDefaultInterfaceAttribute : Attribute {
+    /// <summary>
+    /// Default constructor, will attribute the interface to the decorated interface.
+    /// </summary>
+    public BundleDefaultInterfaceAttribute() { }
+
+    /// <summary>
+    /// Type parameter, allows reference to another interface.
+    /// </summary>
+    /// <param name="type"></param>
+    public BundleDefaultInterfaceAttribute(Type type) { }
+
+}
+
