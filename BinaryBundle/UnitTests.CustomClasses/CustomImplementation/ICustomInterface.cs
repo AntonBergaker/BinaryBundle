@@ -5,8 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using BinaryBundle;
 
-namespace UnitTests.CustomClasses; 
+namespace UnitTests.CustomClasses;
 
 [BundleDefaultInterface]
-internal interface ICustomInterface : IBundleSerializableBase<StringWriter, StringReader> {
+public interface ICustomInterface : IBundleSerializableBase<StringWriter, StringReader> {
 }

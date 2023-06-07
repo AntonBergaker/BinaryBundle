@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using BinaryBundle;
 
 namespace UnitTests.CustomClasses {
-    internal class StringReader : IBundleReader {
+    public class StringReader : IBundleReader {
 
         private readonly string input;
         private int readIndex;

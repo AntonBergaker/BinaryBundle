@@ -54,6 +54,7 @@ namespace BinaryBundle.Generator {
 
         public void Initialize(GeneratorInitializationContext context) {
             context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
+            //Debugger.Launch();
         }
 
         public void Execute(GeneratorExecutionContext context) {
@@ -73,8 +74,25 @@ namespace BinaryBundle.Generator {
                     continue;
                 }
 
-                if (Utils.HasAttribute(classTypeSymbol, DefaultInterfaceAttributeName) == false) {
+                AttributeData? attributeInterface = null;
+                var attributes = classTypeSymbol.GetAttributes();
+                foreach (var attribute in attributes) {
+                    if (attribute.AttributeClass?.ToString() == DefaultInterfaceAttributeName) {
+                        attributeInterface = attribute;
+                        break;
+                    }
+                }
+
+                if (attributeInterface == null) {
                     continue;
+                }
+
+                if (attributeInterface.ConstructorArguments.Length > 0) {
+                    var argument = attributeInterface.ConstructorArguments[0];
+                    var typeSymbol = argument.Value as INamedTypeSymbol;
+                    if (typeSymbol != null) {
+                        classTypeSymbol = typeSymbol;
+                    }
                 }
 
                 foreach (INamedTypeSymbol implementedInterface in classTypeSymbol.Interfaces) {
