@@ -130,7 +130,7 @@ namespace BinaryBundle.Generator {
                 string typeName;
 
                 if (isSerializationTypeExtension) {
-                    typeName= methodTypeSymbol.Parameters[1].ToString();
+                    typeName= methodTypeSymbol.Parameters[1].Type.ToString();
                 }
                 else {
                     typeName = methodTypeSymbol.ReturnType.ToString();
