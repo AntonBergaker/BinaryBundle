@@ -8,9 +8,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace BinaryBundle.Generator.FieldGenerators;
 
 internal class FieldGeneratorTypeExtension : FieldGenerator {
-    private readonly Dictionary<string, (string? serializeMethod, string? deserializeMethod)> methodDictionary;
+    private readonly Dictionary<string, (string serializeMethod, string deserializeMethod)> methodDictionary;
 
-    public FieldGeneratorTypeExtension(Dictionary<string, (string? serializeMethod, string? deserializeMethod)> methodDictionary) {
+    public FieldGeneratorTypeExtension(Dictionary<string, (string serializeMethod, string deserializeMethod)> methodDictionary) {
         this.methodDictionary = methodDictionary;
     }
 

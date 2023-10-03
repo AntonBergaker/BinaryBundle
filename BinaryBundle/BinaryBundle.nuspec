@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
 	<metadata>
 		<id>BinaryBundle</id>
-		<version>1.1.4</version>
+		<version>1.1.5</version>
 		<title>BinaryBundle</title>
 		<authors>AntonBergåker</authors>
 		<description>Source generator for binary serialization for structs and classes.</description>
