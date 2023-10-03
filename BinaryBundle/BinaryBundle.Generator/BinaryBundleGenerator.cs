@@ -16,21 +16,6 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
     public const string WriteSizeMethodName = "BinaryBundle.BinaryBundleHelpers.WriteCollectionSize";
     public const string ReadSizeMethodName = "BinaryBundle.BinaryBundleHelpers.ReadCollectionSize";
 
-    private class SyntaxReceiver : ISyntaxReceiver {
-        public readonly List<TypeDeclarationSyntax> ClassReferences = new();
-        public readonly List<MethodDeclarationSyntax> MethodReferences = new();
-        public readonly List<InterfaceDeclarationSyntax> InterfaceReferences = new();
-
-        public void OnVisitSyntaxNode(SyntaxNode syntaxNode) {
-
-            if (syntaxNode is InterfaceDeclarationSyntax @interface) {
-                if (@interface.AttributeLists.Count > 0) {
-                    InterfaceReferences.Add(@interface);
-                }
-            }
-        }
-    }
-
     public void Initialize(IncrementalGeneratorInitializationContext context) {
         //Debugger.Launch();        
         var methodsWithAttribute = context.SyntaxProvider.CreateSyntaxProvider(SerializationMethodsPredicate, SerializationMethodsTransform)
@@ -47,12 +32,6 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
         var everything = typesWithAttribute.Combine(interfaceAndMethod).Select((x, _) => (x.Left, x.Right.Left, x.Right.Right));
 
         context.RegisterSourceOutput(everything, GenerateCode!);
-    }
-
-
-
-    public void Initialize(GeneratorInitializationContext context) {
-        context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
     }
 
     private void GenerateCode(SourceProductionContext context, (
