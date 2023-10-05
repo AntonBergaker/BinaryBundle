@@ -32,17 +32,24 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
     }
 
     public void Initialize(IncrementalGeneratorInitializationContext context) {
-        //Debugger.Launch();        
-        var methodsWithAttribute = context.SyntaxProvider.CreateSyntaxProvider(SerializationMethodsPredicate, SerializationMethodsTransform)
-            .Where(x => x is not null).Collect();
+        //Debugger.Launch();
+        
+        var serializationMethodsWithAttribute = context.SyntaxProvider.ForAttributeWithMetadataName(TypeExtensionSerializationName,
+            SerializationMethodsPredicate, static (c, t) => SerializationMethodsTransform(c, t, SerializationMethodType.Serialization))
+            .Where(x => x is not null);
+        var deserializationMethodsWithAttribute = context.SyntaxProvider.ForAttributeWithMetadataName(TypeExtensionDeserializationName,
+            SerializationMethodsPredicate, static (c, t) => SerializationMethodsTransform(c, t, SerializationMethodType.Deserialization))
+            .Where(x => x is not null);
 
-        var interfaceWithAttribute = context.SyntaxProvider.CreateSyntaxProvider(DefaultInterfacePredicate, DefaultInterfaceTransform)
+        var methodDictionary = serializationMethodsWithAttribute.Collect().Combine(deserializationMethodsWithAttribute.Collect()).Select(SerializationMethodsCombine!);
+
+        var interfaceWithAttribute = context.SyntaxProvider.ForAttributeWithMetadataName(DefaultInterfaceAttributeName, DefaultInterfacePredicate, DefaultInterfaceTransform)
             .Where(x => x is not null).Collect().Select(DefaultInterfaceCollect!);
 
-        var typesWithAttribute = context.SyntaxProvider.CreateSyntaxProvider(TypeSyntaxPredicate, TypeSyntaxTransform)
+        var typesWithAttribute = context.SyntaxProvider.ForAttributeWithMetadataName(BundleAttribute, TypeSyntaxPredicate, TypeSyntaxTransform)
             .Where(x => x is not null).Collect();
 
-        var interfaceAndMethod = interfaceWithAttribute.Combine(methodsWithAttribute);
+        var interfaceAndMethod = interfaceWithAttribute.Combine(methodDictionary);
 
         var everything = typesWithAttribute.Combine(interfaceAndMethod).Select((x, _) => (x.Left, x.Right.Left, x.Right.Right));
 
@@ -58,7 +65,7 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
     private void GenerateCode(SourceProductionContext context, (
             ImmutableArray<SerializableClass> classes,
             DefaultInterfaceDeclaration @interface,
-            ImmutableArray<SerializationMethod> methods)
+            Dictionary<string, SerializationMethods> methods)
         data) {
 
 
@@ -68,32 +75,7 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
         string writerName = data.@interface.WriterName;
         string readerName = data.@interface.ReaderName;
 
-        Dictionary<string, (string serializeMethod, string deserializeMethod)> extensionTypeMethods = new();
-        {
-            Dictionary<string, (string? serializeMethod, string? deserializeMethod)> incompleteMethods = new();
-            foreach (var method in data.methods) {
-                var typeName = method.TypeName;
-                
-                if (incompleteMethods.TryGetValue(typeName, out var tuple) == false) {
-                    tuple = (null, null);
-                }
-
-                if (method.Type == SerializationMethodType.Serialization) {
-                    tuple.serializeMethod = method.MethodName;
-                } else {
-                    tuple.deserializeMethod = method.MethodName;
-                }
-
-                incompleteMethods[typeName] = tuple;
-            }
-
-            foreach (var pair in incompleteMethods) {
-                var (serialize, deserialize) = pair.Value;
-                if (serialize != null && deserialize != null) {
-                    extensionTypeMethods.Add(pair.Key, (serialize, deserialize));
-                }
-            }
-        }
+        var extensionTypeMethods = data.methods;
         
 
         List<FieldGenerator> fieldGenerators = new();

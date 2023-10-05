@@ -12,20 +12,16 @@ public partial class BinaryBundleGenerator {
     public const string BundleAttribute = "BinaryBundle.BinaryBundleAttribute";
 
     private bool TypeSyntaxPredicate(SyntaxNode syntaxNode, CancellationToken token) {
-        return (syntaxNode is ClassDeclarationSyntax or StructDeclarationSyntax);
+        return (syntaxNode is ClassDeclarationSyntax or StructDeclarationSyntax or RecordDeclarationSyntax);
     }
 
-    private SerializableClass? TypeSyntaxTransform(GeneratorSyntaxContext context, CancellationToken token) {
-        var typeDeclaration = (TypeDeclarationSyntax)context.Node;
+    private SerializableClass? TypeSyntaxTransform(GeneratorAttributeSyntaxContext context, CancellationToken token) {
+        var typeDeclaration = (TypeDeclarationSyntax)context.TargetNode;
 
         SemanticModel model = context.SemanticModel;
 
         var classTypeSymbol = model.GetDeclaredSymbol(typeDeclaration) as ITypeSymbol;
         if (classTypeSymbol == null) {
-            return null;
-        }
-
-        if (Utils.HasAttribute(classTypeSymbol, BundleAttribute) == false) {
             return null;
         }
 

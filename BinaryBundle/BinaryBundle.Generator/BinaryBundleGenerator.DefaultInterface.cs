@@ -17,16 +17,15 @@ public partial class BinaryBundleGenerator {
         return (syntaxNode is InterfaceDeclarationSyntax);
     }
 
-    private DefaultInterfaceDeclaration? DefaultInterfaceTransform(GeneratorSyntaxContext context, CancellationToken token) {
-        SemanticModel model = context.SemanticModel;
-
-        var classTypeSymbol = model.GetDeclaredSymbol(context.Node) as INamedTypeSymbol;
+    private DefaultInterfaceDeclaration? DefaultInterfaceTransform(GeneratorAttributeSyntaxContext context, CancellationToken token) {
+        var classTypeSymbol = context.TargetSymbol as INamedTypeSymbol;
         if (classTypeSymbol == null) {
             return null;
         }
 
+
         AttributeData? attributeInterface = null;
-        var attributes = classTypeSymbol.GetAttributes();
+        var attributes = context.Attributes;
         foreach (var attribute in attributes) {
             if (attribute.AttributeClass?.ToString() == DefaultInterfaceAttributeName) {
                 attributeInterface = attribute;
@@ -70,7 +69,7 @@ public partial class BinaryBundleGenerator {
         return new DefaultInterfaceDeclaration("BinaryBundle.IBundleSerializable", "BinaryBundle.BufferWriter", "BinaryBundle.BufferReader");
     }
 
-    private class DefaultInterfaceDeclaration {
+    private class DefaultInterfaceDeclaration : IEquatable<DefaultInterfaceDeclaration?> {
         public readonly string Name;
         public readonly string WriterName;
         public readonly string ReaderName;
@@ -79,6 +78,13 @@ public partial class BinaryBundleGenerator {
             Name = name;
             WriterName = writerName;
             ReaderName = readerName;
+        }
+
+        public bool Equals(DefaultInterfaceDeclaration? other) {
+            return other is not null &&
+                   Name == other.Name &&
+                   WriterName == other.WriterName &&
+                   ReaderName == other.ReaderName;
         }
     }
 }

@@ -8,7 +8,7 @@ internal partial class PropertiesTest {
 
     [BinaryBundle]
     public partial class SimplePropertyClass {
-        public string StringProperty { get; set; }
+        public string? StringProperty { get; set; }
     }
 
     [Test]
