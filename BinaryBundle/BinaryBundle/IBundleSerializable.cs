@@ -9,4 +9,4 @@ namespace BinaryBundle;
 /// <summary>
 /// Default interface for BinaryBundle serializable classes.
 /// </summary>
-public interface IBundleSerializable : IBundleSerializableBase<BufferWriter, BufferReader> { }
+public interface IBundleSerializable : IBundleSerializableBase<BundleDefaultWriter, BundleDefaultReader> { }

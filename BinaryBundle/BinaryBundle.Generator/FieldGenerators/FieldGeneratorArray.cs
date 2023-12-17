@@ -7,9 +7,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace BinaryBundle.Generator.FieldGenerators; 
 
 internal class FieldGeneratorArray : FieldGenerator {
-    private readonly List<FieldGenerator> generators;
+    private readonly FieldGeneratorCollection generators;
 
-    public FieldGeneratorArray(List<FieldGenerator> generators) {
+    public FieldGeneratorArray(FieldGeneratorCollection generators) {
         this.generators = generators;
     }
 
@@ -31,18 +31,11 @@ internal class FieldGeneratorArray : FieldGenerator {
         string indexVariable = rank == 1 ? "i"+GetDepthNr() :
             string.Join(",", Enumerable.Range(0, rank).Select(x => (char)('i'+x)+GetDepthNr()) );
 
-
-        TypeMethods? innerTypeMethods = null;
-        foreach (FieldGenerator generator in generators) {
-            if (generator.TryMatch(arrayType.ElementType, $"{fieldName}[{indexVariable}]", depth + 1, false, context, out innerTypeMethods)) {
-                break;
-            }
-        }
-
-        if (innerTypeMethods == null) {
+        if (generators.TryMatch(arrayType.ElementType, $"{fieldName}[{indexVariable}]", depth + 1, false, context, out var innerTypeMethods) == false) {
             result = null;
             return false;
         }
+        _ = innerTypeMethods ?? throw new Exception("Stop shouting at me, I can't fix it.");
 
         if (rank == 1) {
             result = new(
@@ -59,7 +52,7 @@ internal class FieldGeneratorArray : FieldGenerator {
                 },
                 (codeBuilder) => {
                     // So our stored field size doesn't have name conflicts, add a code block
-                    codeBuilder.AddLine($"BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers(ref {fieldName}, {BinaryBundleGenerator.ReadSizeMethodName}(reader));");
+                    codeBuilder.AddLine($"{fieldName} = BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers({fieldName}, {BinaryBundleGenerator.ReadSizeMethodName}(reader));");
 
                     codeBuilder.AddLine($"for (int {indexVariable} = 0; {indexVariable} < {fieldName}.Length; {indexVariable}++) {{");
                     codeBuilder.Indent();
@@ -96,7 +89,7 @@ internal class FieldGeneratorArray : FieldGenerator {
                 (codeBuilder) => {
                     // So our stored field size doesn't have name conflicts, add a code block
                     codeBuilder.AddLine(
-                        $"BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers(ref {fieldName},");
+                        $"{fieldName} = BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers({fieldName},");
                     codeBuilder.Indent();
                     for (int i = 0; i < rank; i++) {
                         codeBuilder.AddLine($"{BinaryBundleGenerator.ReadSizeMethodName}(reader) " + (i + 1 == rank ? "" : ","));

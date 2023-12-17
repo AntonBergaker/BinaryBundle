@@ -11,7 +11,7 @@ partial class SimpleClass {
 public partial class BinarySerializationTest {
 
     [Test]
-    public void TestSimpleSerialization() {
+    public void SimpleSerialization() {
         SimpleClass @class = new SimpleClass {
             IntField = 3,
         };
@@ -21,17 +21,17 @@ public partial class BinarySerializationTest {
     }
 
     [BinaryBundle]
-    partial class NestedClass {
+    partial class MyNestedClass {
         public string StringField = "";
     }
 
     [Test]
-    public void TestNestedClass() {
-        NestedClass @class = new() {
+    public void NestedClass() {
+        MyNestedClass @class = new() {
             StringField = "hello"
         };
 
-        NestedClass deserializedClass = TestUtils.MakeSerializedCopy(@class);
+        MyNestedClass deserializedClass = TestUtils.MakeSerializedCopy(@class);
 
         Assert.AreEqual(@class.StringField, deserializedClass.StringField);
     }
@@ -42,7 +42,7 @@ public partial class BinarySerializationTest {
     }
 
     [Test]
-    public void TestStruct() {
+    public void Struct() {
         SimpleStruct @struct = new() {
             ByteField = 0xB0
         };
@@ -117,7 +117,7 @@ public partial class BinarySerializationTest {
     }
 
     [Test]
-    public void TestIgnore() {
+    public void IgnoreAttribute() {
         ClassWithIgnoredFields @class = new() {
             IgnoredString = "lol I sure hope I'm not set",
             IntField = 6

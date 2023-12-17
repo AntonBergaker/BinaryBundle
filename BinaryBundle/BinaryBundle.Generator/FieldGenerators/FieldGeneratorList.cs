@@ -1,12 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 
 namespace BinaryBundle.Generator.FieldGenerators; 
 
 internal class FieldGeneratorList : FieldGenerator {
-    private readonly List<FieldGenerator> generators;
+    private readonly FieldGeneratorCollection generators;
 
-    public FieldGeneratorList(List<FieldGenerator> generators) {
+    public FieldGeneratorList(FieldGeneratorCollection generators) {
         this.generators = generators;
     }
 
@@ -24,19 +25,14 @@ internal class FieldGeneratorList : FieldGenerator {
         string indexVariable = depth == 0 ? "i" : "i" + depth;
         string tempVariable = GetTempVariable(depth);
 
-        TypeMethods? innerTypeMethods = null;
         ITypeSymbol innerType = namedType.TypeArguments[0];
 
-        foreach (FieldGenerator generator in generators) {
-            if (generator.TryMatch(innerType, tempVariable, depth + 1, false, context, out innerTypeMethods)) {
-                break;
-            }
-        }
-
-        if (innerTypeMethods == null) {
+        if (generators.TryMatch(innerType, tempVariable, depth + 1, false, context, out var innerTypeMethods) == false) {
             result = null;
             return false;
         }
+        _ = innerTypeMethods ?? throw new Exception("Stop shouting at me, I can't fix it.");
+
 
         string sizeVariable = depth == 0 ? "size" : "size" + depth;
         result = new ((code) => {
@@ -49,7 +45,7 @@ internal class FieldGeneratorList : FieldGenerator {
             code.StartBlock();
 
             code.AddLine($"int {sizeVariable} = {BinaryBundleGenerator.ReadSizeMethodName}(reader);");
-            code.AddLine($"BinaryBundle.BinaryBundleHelpers.ClearListAndPrepareCapacity(ref {fieldName}, {sizeVariable});");
+            code.AddLine($"{fieldName} = BinaryBundle.BinaryBundleHelpers.ClearListAndPrepareCapacity({fieldName}, {sizeVariable});");
             code.StartBlock($"for (int {indexVariable} = 0; {indexVariable} < {sizeVariable}; {indexVariable}++)");
             code.AddLine($"{innerType} {tempVariable} = default;");
             innerTypeMethods.WriteDeserializeMethod(code);

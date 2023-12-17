@@ -12,11 +12,11 @@ public static class BinaryBundleHelpers {
     /// <typeparam name="T"></typeparam>
     /// <param name="array"></param>
     /// <param name="size"></param>
-    public static void CreateArrayIfSizeDiffers<T>(ref T[]? array, int size) {
+    public static T[] CreateArrayIfSizeDiffers<T>(T[]? array, int size) {
         if (array != null && array.Length == size) {
-            return;
+            return array;
         }
-        array = new T[size];
+        return new T[size];
     }
 
     /// <summary>
@@ -26,14 +26,14 @@ public static class BinaryBundleHelpers {
     /// <param name="array"></param>
     /// <param name="dimension0Size"></param>
     /// <param name="dimension1Size"></param>
-    public static void CreateArrayIfSizeDiffers<T>(ref T[,]? array, int dimension0Size, int dimension1Size) {
+    public static T[,] CreateArrayIfSizeDiffers<T>(T[,]? array, int dimension0Size, int dimension1Size) {
         if (array != null && 
             array.GetLength(0) == dimension0Size &&
             array.GetLength(1) == dimension1Size) {
-            return;
+            return array;
         }
 
-        array = new T[dimension0Size, dimension1Size];
+        return new T[dimension0Size, dimension1Size];
     }
 
     /// <summary>
@@ -44,15 +44,15 @@ public static class BinaryBundleHelpers {
     /// <param name="dimension0Size"></param>
     /// <param name="dimension1Size"></param>
     /// <param name="dimension2Size"></param>
-    public static void CreateArrayIfSizeDiffers<T>(ref T[,,]? array, int dimension0Size, int dimension1Size, int dimension2Size) {
+    public static T[,,] CreateArrayIfSizeDiffers<T>(T[,,]? array, int dimension0Size, int dimension1Size, int dimension2Size) {
         if (array != null &&
             array.GetLength(0) == dimension0Size &&
             array.GetLength(1) == dimension1Size &&
             array.GetLength(2) == dimension2Size) {
-            return;
+            return array;
         }
 
-        array = new T[dimension0Size, dimension1Size, dimension2Size];
+        return new T[dimension0Size, dimension1Size, dimension2Size];
     }
 
     /// <summary>
@@ -61,16 +61,16 @@ public static class BinaryBundleHelpers {
     /// <typeparam name="T"></typeparam>
     /// <param name="list"></param>
     /// <param name="size"></param>
-    public static void ClearListAndPrepareCapacity<T>(ref List<T>? list, int size) {
+    public static List<T> ClearListAndPrepareCapacity<T>(List<T>? list, int size) {
         if (list == null) {
-            list = new List<T>(size);
-            return;
+            return new List<T>(size);
         }
 
         if (size > list.Capacity) {
             list.Capacity = size;
         }
         list.Clear();
+        return list;
     }
 
     /// <summary>
