@@ -20,7 +20,7 @@ public class BundleIgnoreAttribute : Attribute { }
 /// <summary>
 /// Specify the method as being an extension method for the <see cref="IBundleSerializableBase{TWriter,TReader}.Serialize"/> methods.
 /// Whenever the type used by the method is encountered in a class use this method to serialize it.
-/// Method needs to have format: <code>void Method(BufferWriter writer, Type field)</code>
+/// Method needs to have format: <code>void Method(BundleWriter writer, Type field)</code>
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
 public class BundleSerializeTypeExtensionAttribute : Attribute { }
@@ -28,7 +28,7 @@ public class BundleSerializeTypeExtensionAttribute : Attribute { }
 /// <summary>
 /// Specify the method as being an extension method for the BinaryBundle <see cref="IBundleSerializableBase{TWriter,TReader}.Deserialize"/> methods.
 /// Whenever the type used by the method is encountered in a class it will use this method to deserialize it.
-/// Method needs to have format: <code>Type Method(BufferReader reader)</code>
+/// Method needs to have format: <code>Type Method(BundleWriter reader)</code>
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
 public class BundleDeserializeTypeExtensionAttribute : Attribute { }

@@ -11,8 +11,8 @@ internal class HelpersTest {
 
         Random random = new();
         byte[] buffer = new byte[0x8];
-        BufferWriter writer = new(buffer);
-        BufferReader reader = new(buffer);
+        BundleDefaultWriter writer = new(buffer);
+        BundleDefaultReader reader = new(buffer);
 
         for (int i = 0; i < 1000; i++) {
             writer.ResetPosition();
@@ -39,8 +39,8 @@ internal class HelpersTest {
     [Test]
     public void TestCollectionSizeWriteKnownNumbers() {
         byte[] buffer = new byte[0x8];
-        BufferWriter writer = new(buffer);
-        BufferReader reader = new(buffer);
+        BundleDefaultWriter writer = new(buffer);
+        BundleDefaultReader reader = new(buffer);
 
         foreach (var pair in knownNumbers) {
             writer.ResetPosition();
@@ -60,8 +60,8 @@ internal class HelpersTest {
     [Test]
     public void TestCollectionSizeReadKnownNumbers() {
         byte[] buffer = new byte[0x8];
-        BufferWriter writer = new(buffer);
-        BufferReader reader = new(buffer);
+        BundleDefaultWriter writer = new(buffer);
+        BundleDefaultReader reader = new(buffer);
 
         foreach (var pair in knownNumbers) {
             writer.ResetPosition();

@@ -24,13 +24,13 @@ internal partial class TypeExtensionTest {
 
 static class VectorSerializeExtension {
     [BundleSerializeTypeExtension]
-    public static void WriteVector2(this BufferWriter writer, Vector2 vector) {
+    public static void WriteVector2(this BundleDefaultWriter writer, Vector2 vector) {
         writer.WriteFloat(vector.X);
         writer.WriteFloat(vector.Y);
     }
 
     [BundleDeserializeTypeExtension]
-    public static Vector2 ReadVector2(this BufferReader reader) {
+    public static Vector2 ReadVector2(this BundleDefaultReader reader) {
         float x = reader.ReadFloat();
         float y = reader.ReadFloat();
         return new Vector2(x, y);

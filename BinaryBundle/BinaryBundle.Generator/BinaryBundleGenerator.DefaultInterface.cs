@@ -66,7 +66,7 @@ public partial class BinaryBundleGenerator {
         if (first != null) {
             return first;
         }
-        return new DefaultInterfaceDeclaration("BinaryBundle.IBundleSerializable", "BinaryBundle.BufferWriter", "BinaryBundle.BufferReader");
+        return new DefaultInterfaceDeclaration("BinaryBundle.IBundleSerializable", "BinaryBundle.BundleDefaultWriter", "BinaryBundle.BundleDefaultReader");
     }
 
     private class DefaultInterfaceDeclaration : IEquatable<DefaultInterfaceDeclaration?> {

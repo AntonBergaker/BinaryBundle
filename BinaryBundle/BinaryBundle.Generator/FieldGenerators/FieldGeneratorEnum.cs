@@ -7,9 +7,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace BinaryBundle.Generator.FieldGenerators;
 
 internal class FieldGeneratorEnum : FieldGenerator {
-    private readonly List<FieldGenerator> generators;
+    private readonly FieldGeneratorCollection generators;
 
-    public FieldGeneratorEnum(List<FieldGenerator> generators) {
+    public FieldGeneratorEnum(FieldGeneratorCollection generators) {
         this.generators = generators;
     }
 
@@ -28,17 +28,11 @@ internal class FieldGeneratorEnum : FieldGenerator {
 
         string tempVariable = GetTempVariable(depth);
 
-        TypeMethods? methods = null;
-        foreach (FieldGenerator fieldGenerator in generators) {
-            if (fieldGenerator.TryMatch(namedType.EnumUnderlyingType, tempVariable, depth + 1, false, context, out methods)) {
-                break;
-            }
-        }
-
-        if (methods == null) {
+        if (generators.TryMatch(namedType.EnumUnderlyingType, tempVariable, depth + 1, false, context, out var methods) == false) {
             result = null;
             return false;
         }
+        _ = methods ?? throw new Exception("Stop shouting at me, I can't fix it.");
 
         string underlying = namedType.EnumUnderlyingType.ToString();
 

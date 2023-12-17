@@ -9,7 +9,7 @@ namespace BinaryBundle;
 /// <summary>
 /// Binary stream reader for primitive .NET types.
 /// </summary>
-public class BufferReader : IDisposable, IBundleReader {
+public class BundleDefaultReader : IDisposable, IBundleReader {
 
     private readonly BinaryReader reader;
 
@@ -22,20 +22,20 @@ public class BufferReader : IDisposable, IBundleReader {
     public int Position => (int)reader.BaseStream.Position;
 
     /// <summary>
-    /// Instantiates a new BufferReader reading from the provided byte array.
+    /// Instantiates a new BundleDefaultReader reading from the provided byte array.
     /// </summary>
     /// <param name="buffer"></param>
-    public BufferReader(byte[] buffer) {
+    public BundleDefaultReader(byte[] buffer) {
         managesStream = true;
         stream = new MemoryStream(buffer);
         reader = new BinaryReader(stream);
     }
 
     /// <summary>
-    /// Instantiates a new BufferReader reading from the provided stream.
+    /// Instantiates a new BundleDefaultReader reading from the provided stream.
     /// </summary>
     /// <param name="stream"></param>
-    public BufferReader(Stream stream) {
+    public BundleDefaultReader(Stream stream) {
         managesStream = false;
         this.stream = stream;
         reader = new BinaryReader(stream);
@@ -109,7 +109,7 @@ public class BufferReader : IDisposable, IBundleReader {
     }
 
     /// <summary>
-    /// Releases the BufferReader
+    /// Releases the BundleDefaultReader
     /// </summary>
     public void Dispose() {
         if (managesStream) {

@@ -72,14 +72,14 @@ internal partial class PropertiesTest {
 
         byte[] buffer = new byte[0xFF];
 
-        BufferWriter writer = new BufferWriter(buffer);
+        BundleDefaultWriter writer = new BundleDefaultWriter(buffer);
         @class.FailOnPropertyAccess = true;
         @class.Serialize(writer);
         @class.FailOnPropertyAccess = false;
 
         BackedFieldClass deserializedClass = new();
 
-        BufferReader reader = new BufferReader(buffer);
+        BundleDefaultReader reader = new BundleDefaultReader(buffer);
 
         deserializedClass.FailOnPropertyAccess = true;
         deserializedClass.Deserialize(reader);

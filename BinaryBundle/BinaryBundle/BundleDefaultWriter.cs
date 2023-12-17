@@ -8,20 +8,20 @@ namespace BinaryBundle;
 /// <summary>
 /// Binary stream writer for primitive .NET types.
 /// </summary>
-public class BufferWriter : IDisposable, IBundleWriter {
+public class BundleDefaultWriter : IDisposable, IBundleWriter {
 
     private readonly BinaryWriter writer;
 
     private readonly bool managesStream;
     private readonly Stream stream;
 
-    public BufferWriter(byte[] buffer) {
+    public BundleDefaultWriter(byte[] buffer) {
         managesStream = true;
         stream = new MemoryStream(buffer);
         writer = new BinaryWriter(stream);
     }
 
-    public BufferWriter(Stream stream) {
+    public BundleDefaultWriter(Stream stream) {
         managesStream = false;
         this.stream = stream;
         this.writer = new BinaryWriter(stream);
@@ -99,7 +99,7 @@ public class BufferWriter : IDisposable, IBundleWriter {
     public int Position => (int)writer.BaseStream.Position;
 
     /// <summary>
-    /// Releases the BufferWriter
+    /// Releases the BundleDefaultWriter
     /// </summary>
     public void Dispose() {
         writer.Dispose();

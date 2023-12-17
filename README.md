@@ -14,6 +14,7 @@ Currently supported types:
 * Enums
 * Properties and fields
 * Lists and dictionaries
+* Tuples
 
 # Getting started
 
@@ -31,16 +32,16 @@ public partial class SimpleClass {
 BinaryBundle will create a `Serialize()` and `Deserialize()` method for this class, as well make the class implement `IBundleSerializable`. Since these fields are set from normal C# methods, they can not be marked `readonly`.
 
 ## Writing a serializable class to a binary format
-You can now write the class to a binary format using the generated methods with the included `BufferWriter` and `BufferReader` classes. These are small wrappers around the standard library `BinaryWriter` and `BinaryReader` classes. If you want to use your own custom reader/writer, that's outlined here: [Using your own Reader, Writer and Interface](#Using-your-own-reader-writer-and-interface)
+You can now write the class to a binary format using the generated methods with the included `BundleDefaultWriter` and `BundleDefaultReader` classes. These are small wrappers around the standard library `BinaryWriter` and `BinaryReader` classes. If you want to use your own custom reader/writer, that's outlined here: [Using your own Reader, Writer and Interface](#Using-your-own-reader-writer-and-interface)
 ```csharp
 var bytes = new byte[0xFF];
 var @class = new SimpleClass() {
     IntField = 42,
 };
-var bufferWriter = new BufferWriter(bytes);
+var bundleWriter = new BundleDefaultWriter(bytes);
 @class.Serialize(buffer);
 var deserializedClass = new SimpleClass();
-var bufferReader = new BufferReader(bytes);
+var bundleReader = new BundleDefaultReader(bytes);
 deserializedClass.Deserialize(buffer);
 
 Console.WriteLine(@class.IntField); // 42
@@ -73,13 +74,13 @@ Often you want to be able to serialize types outside your own project. BinaryBun
 ```csharp
 static class VectorSerializeExtension {
     [BundleSerializeTypeExtension]
-    public static void WriteVector2(this BufferWriter writer, Vector2 vector) {
+    public static void WriteVector2(this BundleDefaultWriter writer, Vector2 vector) {
         writer.WriteFloat(vector.X);
         writer.WriteFloat(vector.Y);
     }
 
     [BundleDeserializeTypeExtension]
-    public static Vector2 ReadVector2(this BufferReader reader) {
+    public static Vector2 ReadVector2(this BundleDefaultReader reader) {
         float x = reader.ReadFloat();
         float y = reader.ReadFloat();
         return new Vector2(x, y);
@@ -89,7 +90,7 @@ static class VectorSerializeExtension {
 Defining these methods as extension methods isn't necessary but it looks nice.
 
 # Using your own Reader, Writer and Interface
-While the provided BufferWriter and BufferReader classes are fairly fast and flexible, they are not perfect for every project. For that reason you can specify custom Writer and Reader classes to use for the serialization methods. This is done by specifying the classes used by the serializable interface.
+While the provided `BundleDefaultWriter` and `BundleDefaultReader` classes are fairly fast and flexible, they are not perfect for every project. For that reason you can specify custom Writer and Reader classes to use for the serialization methods. This is done by specifying the classes used by the serializable interface.
 
 ## Defining types used by the entire project
 To indicate that an interface should be the one used for serializable classes you need to mark it with the `[BundleDefaultInterface]` attribute, as well as implement `IBundleSerializableBase<TWriter, TReader>`. The types used by TWriter and TReader are the ones that will be used for serialization.
@@ -137,7 +138,7 @@ partial class MyClass {
 
 
 ## Strings
-By default strings are written in a null terminated UTF8 format. You can change this by [overriding the BufferWriter/Reader](#Using-your-own-reader-writer-and-interface). In the default implementation null strings are not supported, and will be interpreted as an empty string.
+By default strings are written in a null terminated UTF8 format. You can change this by [overriding the BundleDefaultWriter/Reader](#Using-your-own-reader-writer-and-interface). In the default implementation null strings are not supported, and will be interpreted as an empty string.
 
 ## Enums
 Enums are serialized using their underlying C# type.

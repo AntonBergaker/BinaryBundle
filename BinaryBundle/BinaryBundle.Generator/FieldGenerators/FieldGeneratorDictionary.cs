@@ -4,9 +4,9 @@ using Microsoft.CodeAnalysis;
 namespace BinaryBundle.Generator.FieldGenerators;
 
 internal class FieldGeneratorDictionary : FieldGenerator {
-    private readonly List<FieldGenerator> generators;
+    private readonly FieldGeneratorCollection generators;
 
-    public FieldGeneratorDictionary(List<FieldGenerator> generators) {
+    public FieldGeneratorDictionary(FieldGeneratorCollection generators) {
         this.generators = generators;
     }
 
@@ -25,21 +25,18 @@ internal class FieldGeneratorDictionary : FieldGenerator {
         string iteratorVariable = depth == 0 ? "pair" : "pair" + depth;
 
         string keyTempVariable = "key" + GetTempVariable(depth);
-        TypeMethods? innerKeyMethods = null;
         ITypeSymbol innerKeyType = namedType.TypeArguments[0];
-        foreach (FieldGenerator generator in generators) {
-            if (generator.TryMatch(innerKeyType, keyTempVariable, depth + 1, false, context, out innerKeyMethods)) {
-                break;
-            }
+        if (generators.TryMatch(innerKeyType, keyTempVariable, depth + 1, false, context, out var innerKeyMethods) == false) {
+            result = null;
+            return false;
         }
+        
 
         string valueTempVariable = "value"+GetTempVariable(depth);
-        TypeMethods? innerValueMethods = null;
         ITypeSymbol innerValueType = namedType.TypeArguments[1];
-        foreach (FieldGenerator generator in generators) {
-            if (generator.TryMatch(innerValueType, valueTempVariable, depth + 1, false, context, out innerValueMethods)) {
-                break;
-            }
+        if (generators.TryMatch(innerValueType, valueTempVariable, depth + 1, false, context, out var innerValueMethods) == false) {
+            result = null;
+            return false;
         }
 
         if (innerKeyMethods == null || innerValueMethods == null) {

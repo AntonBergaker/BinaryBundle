@@ -16,21 +16,6 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
     public const string WriteSizeMethodName = "BinaryBundle.BinaryBundleHelpers.WriteCollectionSize";
     public const string ReadSizeMethodName = "BinaryBundle.BinaryBundleHelpers.ReadCollectionSize";
 
-    private class SyntaxReceiver : ISyntaxReceiver {
-        public readonly List<TypeDeclarationSyntax> ClassReferences = new();
-        public readonly List<MethodDeclarationSyntax> MethodReferences = new();
-        public readonly List<InterfaceDeclarationSyntax> InterfaceReferences = new();
-
-        public void OnVisitSyntaxNode(SyntaxNode syntaxNode) {
-
-            if (syntaxNode is InterfaceDeclarationSyntax @interface) {
-                if (@interface.AttributeLists.Count > 0) {
-                    InterfaceReferences.Add(@interface);
-                }
-            }
-        }
-    }
-
     public void Initialize(IncrementalGeneratorInitializationContext context) {
         //Debugger.Launch();
         
@@ -57,11 +42,6 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
     }
 
 
-
-    public void Initialize(GeneratorInitializationContext context) {
-        context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
-    }
-
     private void GenerateCode(SourceProductionContext context, (
             ImmutableArray<SerializableClass> classes,
             DefaultInterfaceDeclaration @interface,
@@ -78,7 +58,7 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
         var extensionTypeMethods = data.methods;
         
 
-        List<FieldGenerator> fieldGenerators = new();
+        FieldGeneratorCollection fieldGenerators = new();
 
         fieldGenerators.AddRange(new FieldGenerator[] {
             new FieldGeneratorPrimitive(),
@@ -88,6 +68,7 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
             new FieldGeneratorArray(fieldGenerators),
             new FieldGeneratorList(fieldGenerators),
             new FieldGeneratorDictionary(fieldGenerators),
+            new FieldGeneratorTuple(fieldGenerators),
         });
 
         foreach (var classData in serializableClasses.Values) {
@@ -157,12 +138,10 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
                     continue;
                 }
 
-
-                foreach (FieldGenerator fieldGenerator in fieldGenerators) {
-                    if (fieldGenerator.TryMatch(fieldTypeInfo, "this." + variableName, 0, isAccessor, fieldContext, out TypeMethods? result)) {
-                        fields.Add(result!);
-                    }
+                if (fieldGenerators.TryMatch(fieldTypeInfo, "this." + variableName, 0, isAccessor, fieldContext, out TypeMethods? result)) {
+                    fields.Add(result!);
                 }
+                
                 
                 outer_continue: ;
             }
