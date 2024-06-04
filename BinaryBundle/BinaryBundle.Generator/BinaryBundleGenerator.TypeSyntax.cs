@@ -35,8 +35,19 @@ public partial class BinaryBundleGenerator {
         List<FieldTypeData> members = [];
 
         foreach (var member in classTypeSymbol.GetMembers()) {
-            if (Utils.HasAttribute(member, IgnoreAttributeNameWithGlobal) == true) {
+            if (Utils.HasAttribute(member, IgnoreAttributeName)) {
                 continue;
+            }
+
+            LimitData? limitData;
+            var limitAttribute = member.GetAttributes().FirstOrDefault(x => x.AttributeClass?.ToDisplayString() == LimitAttributeName);
+            if (limitAttribute != null) {
+                var constructor = limitAttribute.ConstructorArguments;
+                int limit = (int)constructor[0].Value!;
+                BundleLimitBehavior limitBehavior = (BundleLimitBehavior)(int)constructor[1].Value!;
+                limitData = new(limit, limitBehavior);
+            } else {
+                limitData = null;
             }
 
             if (member is IFieldSymbol field) {
@@ -45,7 +56,7 @@ public partial class BinaryBundleGenerator {
                 }
 
                 var currentData = new CurrentFieldData(field.Type, member.Name,
-                    Depth: 0, IsAccessor: false, Limit: 0, IsReadOnly: field.IsReadOnly);
+                    Depth: 0, IsAccessor: false, Limit: limitData, IsReadOnly: field.IsReadOnly);
                 var context = new FieldDataContext(defaultInterface.Name, serializationMethods);
                 if (_typeGenerators.TryGetFieldData(currentData, context, out var result) == true) {
                     members.Add(result!);
@@ -62,7 +73,7 @@ public partial class BinaryBundleGenerator {
                     (property.SetMethod?.ToString().EndsWith("init") ?? false); // There must be a better way to detect init properties...
                 
                 var currentData = new CurrentFieldData(property.Type, member.Name, 
-                    Depth: 0, IsAccessor: true, Limit: 0, IsReadOnly: readOnly);
+                    Depth: 0, IsAccessor: true, Limit: limitData, IsReadOnly: readOnly);
                 var context = new FieldDataContext(defaultInterface.Name, serializationMethods);
                 if (_typeGenerators.TryGetFieldData(currentData, context, out var result) == true) {
                     members.Add(result!);
@@ -85,7 +96,7 @@ public partial class BinaryBundleGenerator {
         var baseType = classTypeSymbol.BaseType;
         bool inheritsSerializable = baseType != null &&
                              (Utils.TypeImplements(baseType, defaultInterface.Name) ||
-                              Utils.TypeOrInheritanceHasAttribute(baseType, BundleAttributeNameWithGlobal));
+                              Utils.TypeOrInheritanceHasAttribute(baseType, BundleAttributeName));
 
 
         List<(string, BundleClassType)>? parents = null;

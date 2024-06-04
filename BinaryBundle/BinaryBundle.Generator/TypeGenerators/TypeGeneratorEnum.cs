@@ -46,7 +46,7 @@ internal class TypeGeneratorEnum : TypeGenerator<TypeGeneratorEnum.EnumTypeData>
         return true;
     }
 
-    public override SerializationMethods EmitMethods(EnumTypeData typeData, EmitContext context) {
+    public override SerializationMethods EmitMethods(EnumTypeData typeData, CurrentEmitData emitData, EmitContext context) {
 
         string serialize = $"writer.Write{typeData.MethodName}(({typeData.UnderlyingType}){typeData.FieldName});";
         string deserialize = $"{typeData.FieldName} = ({typeData.EnumName})reader.Read{typeData.MethodName}();";

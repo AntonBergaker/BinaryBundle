@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis;
 namespace BinaryBundle.Generator.TypeGenerators;
 
 internal class TypeGeneratorSerializable : TypeGenerator<TypeGeneratorSerializable.SerializableTypeData> {
-    internal record SerializableTypeData(string FieldName, string TypeName, int depth, bool ShouldBeReassigned) : FieldTypeData(FieldName);
+    internal record SerializableTypeData(string FieldName, string TypeName, bool ShouldBeReassigned) : FieldTypeData(FieldName);
 
 
     public override bool TryGetFieldData(CurrentFieldData currentField, FieldDataContext context, out SerializableTypeData? result) {
@@ -21,24 +21,28 @@ internal class TypeGeneratorSerializable : TypeGenerator<TypeGeneratorSerializab
             return false;
         }
 
-        result = new(currentField.FieldName, currentField.Type.ToDisplayString(), currentField.Depth, currentField.IsAccessor && currentField.Type.IsValueType);
+        result = new(currentField.FieldName, currentField.Type.ToDisplayString(), currentField.IsAccessor && currentField.Type.IsValueType);
         return true;
     }
 
-    public override SerializationMethods EmitMethods(SerializableTypeData typeData, EmitContext context) {
-        var (fieldName, typeName, depth, shouldBeReassigned) = typeData;
+    public override SerializationMethods EmitMethods(SerializableTypeData typeData, CurrentEmitData emitData, EmitContext context) {
+        var (fieldName, typeName, shouldBeReassigned) = typeData;
 
         var serialize = (CodeBuilder code) => code.AddLine($"{fieldName}.Serialize(writer);");
         var deserialize = (CodeBuilder code) => code.AddLine($"{fieldName}.Deserialize(reader);");
 
         if (shouldBeReassigned) {
-            string tempVariable = GetTempVariable(depth);
+            string tempVariable = GetTempVariable(emitData.Depth);
             deserialize = (code) => {
-                code.StartBlock();
+                if (emitData.CanHaveNeighbors) {
+                    code.StartBlock();
+                }
                 code.AddLine($"{typeName} {tempVariable} = {fieldName};");
                 code.AddLine($"{tempVariable}.Deserialize(reader);");
                 code.AddLine($"{fieldName} = {tempVariable};");
-                code.EndBlock();
+                if (emitData.CanHaveNeighbors) {
+                    code.EndBlock();
+                }
             };
         }
 

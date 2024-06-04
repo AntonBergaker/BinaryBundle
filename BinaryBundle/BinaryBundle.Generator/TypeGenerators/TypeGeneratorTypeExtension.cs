@@ -5,7 +5,7 @@ namespace BinaryBundle.Generator.TypeGenerators;
 internal class TypeGeneratorTypeExtension : TypeGenerator<TypeGeneratorTypeExtension.TypeDataTypeExtension> {
     internal record TypeDataTypeExtension(string FieldName, TypeExtensionMethods Methods) : FieldTypeData(FieldName);
 
-    public override SerializationMethods EmitMethods(TypeDataTypeExtension typeData, EmitContext context) {
+    public override SerializationMethods EmitMethods(TypeDataTypeExtension typeData, CurrentEmitData emitData, EmitContext context) {
         var (fieldName, methods) = typeData;
         string serialize = $"{methods.SerializationMethodName}(writer, {fieldName});";
         string deserialize = $"{fieldName} = {methods.DeserializationMethodName}(reader);";

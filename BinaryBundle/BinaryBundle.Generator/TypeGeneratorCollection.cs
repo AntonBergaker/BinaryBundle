@@ -25,11 +25,11 @@ internal class TypeGeneratorCollection {
         return false;
     }
 
-    public TypeGenerators.SerializationMethods EmitMethods(FieldTypeData typeData, EmitContext context) {
+    public SerializationMethods EmitMethods(FieldTypeData typeData, CurrentEmitData emitData, EmitContext context) {
         var type = typeData.GetType();
         foreach (var generator in _generators) {
             if (generator.Handles == type) {
-                return generator.EmitMethods(typeData, context);
+                return generator.EmitMethods(typeData, emitData, context);
             }
         }
 

@@ -22,7 +22,7 @@ internal class Utils {
     }
 
     public static bool HasAttribute(ISymbol? type, string fullAttributeName) {
-        return type?.GetAttributes().Any(x => x.AttributeClass?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == fullAttributeName) ?? false;
+        return type?.GetAttributes().Any(x => x.AttributeClass?.ToDisplayString() == fullAttributeName) ?? false;
     }
 
     public static bool TypeOrInheritanceHasAttribute(ITypeSymbol type, string fullAttributeName) {
@@ -37,6 +37,6 @@ internal class Utils {
     }
 
     public static bool IsTypeSerializable(ITypeSymbol symbol, string interfaceName) {
-        return TypeImplements(symbol, interfaceName) || TypeOrInheritanceHasAttribute(symbol, BinaryBundleGenerator.BundleAttributeNameWithGlobal);
+        return TypeImplements(symbol, interfaceName) || TypeOrInheritanceHasAttribute(symbol, BinaryBundleGenerator.BundleAttributeName);
     }
 }

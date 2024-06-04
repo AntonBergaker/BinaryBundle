@@ -46,7 +46,7 @@ internal partial class RecordTest {
             JacobsTestVariable = "Glorp"
         };
         var deserializedRecord = TestUtils.MakeSerializedCopy(record);
-        // How convenient
+        // I fucking love records
         Assert.AreEqual(record, deserializedRecord);
     }
 }

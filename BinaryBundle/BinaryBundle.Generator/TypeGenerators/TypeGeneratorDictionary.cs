@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis;
 namespace BinaryBundle.Generator.TypeGenerators;
 
 internal class TypeGeneratorDictionary : TypeGenerator<TypeGeneratorDictionary.DictionaryTypeData> {
-    internal record DictionaryTypeData(string FieldName, int Depth, 
+    internal record DictionaryTypeData(string FieldName, LimitData? LimitData, 
         string KeyType, FieldTypeData KeyTypeData, 
         string ValueType, FieldTypeData ValueTypeData) : FieldTypeData(FieldName);
 
@@ -42,23 +42,41 @@ internal class TypeGeneratorDictionary : TypeGenerator<TypeGeneratorDictionary.D
             return false;
         }
 
-        result = new(currentField.FieldName, depth, innerKeyType.ToDisplayString(), keyFieldData!, innerValueType.ToDisplayString(), valueFieldData!);
+        result = new(currentField.FieldName, currentField.Limit, innerKeyType.ToDisplayString(), keyFieldData!, innerValueType.ToDisplayString(), valueFieldData!);
         return true;
     }
 
-    public override SerializationMethods EmitMethods(DictionaryTypeData typeData, EmitContext context) {
-        var (fieldName, depth, keyType, keyFieldData, valueType, valueFieldData) = typeData;
+    public override SerializationMethods EmitMethods(DictionaryTypeData typeData, CurrentEmitData emitData, EmitContext context) {
+        var (fieldName, limitData, keyType, keyFieldData, valueType, valueFieldData) = typeData;
+        var depth = emitData.Depth;
+        var canHaveNeighbors = emitData.CanHaveNeighbors;
 
         string indexVariable = depth == 0 ? "i" : "i" + depth;
         string iteratorVariable = depth == 0 ? "pair" : "pair" + depth;
         string sizeVariable = depth == 0 ? "size" : "size" + depth;
 
-        var keyEmitData = _generators.EmitMethods(keyFieldData, context);
-        var valueEmitData = _generators.EmitMethods(valueFieldData, context);
+        var keyEmitData = _generators.EmitMethods(keyFieldData, new(depth + 1, false), context);
+        var valueEmitData = _generators.EmitMethods(valueFieldData, new(depth + 1, false), context);
 
         return new((code) => {
-            code.AddLine($"{BinaryBundleGenerator.WriteSizeMethodName}(writer, {fieldName}.Count);");
+            if (canHaveNeighbors) {
+                code.StartBlock();
+            }
+            var isClamped = limitData != null && limitData?.LimitBehavior == BundleLimitBehavior.Clamp;
+            code.AddLine($"int {sizeVariable} = {fieldName}.Count;");
+            EmitWriteCollectionSizeWithLimits(code, sizeVariable, limitData);
+
+            if (isClamped) {
+                code.AddLine($"int {indexVariable} = 0;");
+            }
+
             code.StartBlock($"foreach (var {iteratorVariable} in {fieldName})");
+            // Exit when clamped
+            if (isClamped) {
+                code.StartBlock($"if (++{indexVariable} > {sizeVariable})");
+                code.AddLine("break;");
+                code.EndBlock();
+            }
 
             code.AddLine($"{keyType} {keyFieldData.FieldName} = {iteratorVariable}.Key;");
             keyEmitData.WriteSerializeMethod(code);
@@ -67,10 +85,16 @@ internal class TypeGeneratorDictionary : TypeGenerator<TypeGeneratorDictionary.D
             valueEmitData.WriteSerializeMethod(code);
 
             code.EndBlock();
+            if (canHaveNeighbors) {
+                code.EndBlock();
+            }
         }, (code) => {
-            code.StartBlock();
+            if (canHaveNeighbors) {
+                code.StartBlock();
+            }
 
-            code.AddLine($"int {sizeVariable} = {BinaryBundleGenerator.ReadSizeMethodName}(reader);");
+            EmitReadCollectionSizeWithLimits(code, sizeVariable, limitData);
+
             code.AddLine($"{fieldName}.Clear();");
             code.StartBlock($"for (int {indexVariable} = 0; {indexVariable} < {sizeVariable}; {indexVariable}++)");
 
@@ -83,7 +107,9 @@ internal class TypeGeneratorDictionary : TypeGenerator<TypeGeneratorDictionary.D
             code.AddLine($"{fieldName}.Add({keyFieldData.FieldName}, {valueFieldData.FieldName});");
             code.EndBlock();
 
-            code.EndBlock();
+            if (canHaveNeighbors) {
+                code.EndBlock();
+            }
         });
     }
 }

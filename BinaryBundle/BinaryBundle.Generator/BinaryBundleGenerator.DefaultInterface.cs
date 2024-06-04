@@ -13,6 +13,10 @@ public partial class BinaryBundleGenerator {
     public const string DefaultInterfaceAttributeName = "BinaryBundle.BundleDefaultInterfaceAttribute";
     public const string DefaultInterfaceBaseName = "BinaryBundle.IBundleSerializableBase<TWriter, TReader>";
 
+    public const string WriteSizeMethodName = "BinaryBundle.BinaryBundleHelpers.WriteCollectionSize";
+    public const string ReadSizeMethodName = "BinaryBundle.BinaryBundleHelpers.ReadCollectionSize";
+    public const string LimitExceptionName = "BinaryBundle.BundleCollectionLimitExceededException";
+
     private bool DefaultInterfacePredicate(SyntaxNode syntaxNode, CancellationToken token) {
         return (syntaxNode is InterfaceDeclarationSyntax);
     }
