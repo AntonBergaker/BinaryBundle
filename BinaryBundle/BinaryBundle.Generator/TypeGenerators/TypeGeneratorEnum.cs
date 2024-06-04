@@ -28,6 +28,11 @@ internal class TypeGeneratorEnum : TypeGenerator<TypeGeneratorEnum.EnumTypeData>
             return false;
         }
 
+        if (currentField.IsReadOnly) {
+            result = null;
+            return false;
+        }
+
         _generators.TryGetFieldData(new(namedType.EnumUnderlyingType, "not used, so please don't emit me", 0, false), context, out var generatorResult) ;
         var primitiveResult = generatorResult as TypeGeneratorPrimitive.PrimitiveTypeData;
         // Should never happen, unless C# introduces a new primitive type

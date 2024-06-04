@@ -104,7 +104,7 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
             code.Indent();
             code.AddLine($"base.Serialize(writer);");
         }
-        else if (@class.ClassType == BundledType.BundleClassType.Class) {
+        else if (@class.ClassType is BundleClassType.Class or BundleClassType.Record) {
             code.AddLine($"public virtual void Serialize({writerAndParameter}) {{");
             code.Indent();
         }
@@ -126,7 +126,7 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
             code.AddLine($"public override void Deserialize({readerAndParameter}) {{");
             code.Indent();
             code.AddLine($"base.Deserialize(reader);");
-        } else if (@class.ClassType == BundledType.BundleClassType.Class) {
+        } else if (@class.ClassType is BundleClassType.Class or BundleClassType.Record) {
             code.AddLine($"public virtual void Deserialize({readerAndParameter}) {{");
             code.Indent();
         }
@@ -160,8 +160,10 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
 
     }
 
-    private string GetIdentifierForClassType(BundledType.BundleClassType classType) => classType switch {
-        BundledType.BundleClassType.Struct => "struct",
+    private string GetIdentifierForClassType(BundleClassType classType) => classType switch {
+        BundleClassType.Struct => "struct",
+        BundleClassType.Record => "record",
+        BundleClassType.RecordStruct => "record struct",
         _ => "class",
     };
 }
