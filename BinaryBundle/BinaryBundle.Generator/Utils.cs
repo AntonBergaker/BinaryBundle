@@ -10,8 +10,8 @@ namespace BinaryBundle.Generator;
 internal class Utils {
 
     public static bool TypeImplements(ITypeSymbol type, string typeName) {
-        return (type.ToString() == typeName ||
-                (type.AllInterfaces.Any(x => x.ToString() == typeName)));
+        return (type.Name == typeName ||
+                (type.AllInterfaces.Any(x => x.Name == typeName)));
     }
 
     public static bool TypeImplements(TypeInfo typeInfo, string typeName) {
@@ -22,6 +22,21 @@ internal class Utils {
     }
 
     public static bool HasAttribute(ISymbol? type, string fullAttributeName) {
-        return type?.GetAttributes().Any(x => x.AttributeClass?.ToString() == fullAttributeName) ?? false;
+        return type?.GetAttributes().Any(x => x.AttributeClass?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == fullAttributeName) ?? false;
+    }
+
+    public static bool TypeOrInheritanceHasAttribute(ITypeSymbol type, string fullAttributeName) {
+        var baseType = type;
+        while (baseType != null) {
+            if (HasAttribute(baseType, fullAttributeName)) { 
+                return true; 
+            }
+            baseType = baseType.BaseType;
+        }
+        return false;
+    }
+
+    public static bool IsTypeSerializable(ITypeSymbol symbol, string interfaceName) {
+        return TypeImplements(symbol, interfaceName) || TypeOrInheritanceHasAttribute(symbol, BinaryBundleGenerator.BundleAttributeNameWithGlobal);
     }
 }

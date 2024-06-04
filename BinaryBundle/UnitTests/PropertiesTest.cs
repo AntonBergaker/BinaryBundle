@@ -12,7 +12,7 @@ internal partial class PropertiesTest {
     }
 
     [Test]
-    public void TestSimpleProperty() {
+    public void SimpleProperty() {
         SimplePropertyClass @class = new() {
             StringProperty = "Hello there",
         };
@@ -31,7 +31,7 @@ internal partial class PropertiesTest {
     }
 
     [Test]
-    public void TestPrivateSetter() {
+    public void PrivateSetter() {
         PrivateSetterClass @class = new();
         @class.SetData(0x420);
 
@@ -65,7 +65,7 @@ internal partial class PropertiesTest {
     }
 
     [Test]
-    public void TestBackedField() {
+    public void BackedField() {
         BackedFieldClass @class = new() {
             IntProperty = 69
         };
@@ -89,7 +89,7 @@ internal partial class PropertiesTest {
     }
 
     [BinaryBundle]
-    partial class StructInProperty {
+    partial class StructInPropertyClass {
         [BinaryBundle]
         public partial struct ValueType {
             public int IntField;
@@ -99,8 +99,8 @@ internal partial class PropertiesTest {
     }
 
     [Test]
-    public void TestStructInProperty() {
-        StructInProperty @class = new() {
+    public void StructInProperty() {
+        StructInPropertyClass @class = new() {
             Value = new() {
                 IntField = 6
             }
@@ -117,7 +117,7 @@ internal partial class PropertiesTest {
     }
 
     [Test]
-    public void TestGetOnlyProperty() {
+    public void GetOnlyProperty() {
         ReadOnlyPropertyClass @class = new();
 
         var deserializedClass = TestUtils.MakeSerializedCopy(@class);

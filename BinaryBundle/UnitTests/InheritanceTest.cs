@@ -22,7 +22,7 @@ internal partial class InheritanceTest {
     }
 
     [Test]
-    public void TestInherited() {
+    public void Inherited() {
         var childClass = new ChildClass() {
             A = 1,
             B = 2

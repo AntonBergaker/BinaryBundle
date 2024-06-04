@@ -10,10 +10,10 @@ namespace UnitTests;
 
 internal static class TestUtils {
 
-    private static readonly byte[] sharedBuffer = new byte[0xFFF];
+    private static readonly byte[] _sharedBuffer = new byte[0xFFF];
 
     public static T MakeSerializedCopy<T>(T instance, byte[]? buffer = null) where T : IBundleSerializable, new() {
-        buffer ??= sharedBuffer;
+        buffer ??= _sharedBuffer;
         BundleDefaultWriter writer = new BundleDefaultWriter(buffer);
 
         instance.Serialize(writer);

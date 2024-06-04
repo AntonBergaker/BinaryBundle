@@ -10,9 +10,6 @@ using System.Linq;
 namespace BinaryBundle.Generator;
 
 partial class BinaryBundleGenerator {
-	public const string TypeExtensionSerializationName = "BinaryBundle.BundleSerializeTypeExtensionAttribute";
-	public const string TypeExtensionDeserializationName = "BinaryBundle.BundleDeserializeTypeExtensionAttribute";
-
 	private static bool SerializationMethodsPredicate(SyntaxNode syntaxNode, CancellationToken token) {
 		return (syntaxNode is MethodDeclarationSyntax);
 	}
@@ -27,11 +24,9 @@ partial class BinaryBundleGenerator {
 
 		if (type == SerializationMethodType.Serialization) {
 			typeName = methodTypeSymbol.Parameters[1].Type.ToString();
-			type = SerializationMethodType.Serialization;
 
         } else {
 			typeName = methodTypeSymbol.ReturnType.ToString();
-            type = SerializationMethodType.Deserialization;
         }
 
 		string methodName = $"{methodTypeSymbol.ContainingSymbol}.{methodTypeSymbol.Name}";
@@ -39,12 +34,12 @@ partial class BinaryBundleGenerator {
 		return new SerializationMethod(typeName, methodName);
     }
 
-    private static Dictionary<string, SerializationMethods> SerializationMethodsCombine(
+    private static Dictionary<string, TypeExtensionMethods> SerializationMethodsCombine(
         (ImmutableArray<SerializationMethod> serializations, ImmutableArray<SerializationMethod> deserializations) methods,
         CancellationToken token) {
         var serializations = methods.serializations.ToDictionary(x => x.TypeName);
 
-        var result = new Dictionary<string, SerializationMethods>();
+        var result = new Dictionary<string, TypeExtensionMethods>();
         foreach (var deserializationMethod in methods.deserializations) {
             if (serializations.TryGetValue(deserializationMethod.TypeName, out var serializationMethod) == false) {
                 continue;
@@ -60,19 +55,5 @@ partial class BinaryBundleGenerator {
         Deserialization,
     }
 
-    private class SerializationMethod : IEquatable<SerializationMethod?> {
-        public readonly string TypeName;
-        public readonly string MethodName;
-        public SerializationMethod(string typeName, string methodName) {
-            TypeName = typeName;
-            MethodName = methodName;
-        }
-
-        public bool Equals(SerializationMethod? other) {
-            return other is not null &&
-                   TypeName == other.TypeName &&
-                   MethodName == other.MethodName;
-        }
-    }
-
+    private record SerializationMethod(string TypeName, string MethodName);
 }

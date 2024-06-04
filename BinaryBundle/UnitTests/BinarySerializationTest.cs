@@ -67,11 +67,11 @@ public partial class BinarySerializationTest {
         public ulong ULongField;
         public short ShortField;
         public ushort UShortField;
-        public string StringField;
+        public string? StringField;
     }
 
     [Test]
-    public void TestAllPrimitiveTypes() {
+    public void AllPrimitiveTypes() {
         ClassWithManyTypes @class = new() {
             BoolField = true,
             ByteField = 0x13,

@@ -49,6 +49,32 @@ public class BundleDefaultInterfaceAttribute : Attribute {
     /// </summary>
     /// <param name="type"></param>
     public BundleDefaultInterfaceAttribute(Type type) { }
-
 }
 
+/// <summary>
+/// Behavior when limit is reached on a collection with <see cref="BundleLimitAttribute"/>
+/// </summary>
+public enum BundleLimitBehavior {
+    /// <summary>
+    /// Throws an exception when limit is exceeded
+    /// </summary>
+    ThrowException,
+    /// <summary>
+    /// Clamps the values so they fit inside the limit, discarding the rest. This is done silently.
+    /// </summary>
+    Clamp
+}
+
+/// <summary>
+/// Marks a collection with a maximum number of entries. This can be important to prevent attacks on memory allocations.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+public class BundleLimitAttribute : Attribute { 
+    /// <summary>
+    /// Mark a collection with a maximum number of entries. What happens when the limit is reached can be configured with the behavior parameter.
+    /// Deserializing a collection with more entries than the count will always throw an exception, as this would be bad data.
+    /// </summary>
+    /// <param name="count"></param>
+    /// <param name="behavior">Behavior when limit is reached. Defaults to ThrowException</param>
+    public BundleLimitAttribute(int count, BundleLimitBehavior behavior = BundleLimitBehavior.ThrowException) { }
+}

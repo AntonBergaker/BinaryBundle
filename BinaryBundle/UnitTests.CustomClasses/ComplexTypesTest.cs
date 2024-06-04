@@ -13,7 +13,7 @@ internal partial class ComplexTypesTest {
     [Test]
     public void TestArray() {
         ArrayClass @class = new() {
-            IntArray = new[] { 0x1, 0x2, 0x4 }
+            IntArray = [0x1, 0x2, 0x4]
         };
 
 
