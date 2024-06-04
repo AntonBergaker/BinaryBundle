@@ -21,17 +21,17 @@ Currently supported types:
 ## Importing
 [Import the package to your project using NuGet.](https://www.nuget.org/packages/BinaryBundle/)
 
-## Marking a class for serialization
-To inform BinaryBundle that it should add `Serialize()` and `Deserialize()` methods to a class or struct, mark it with the `[BinaryBundle]` attribute. The type also needs to have a `partial` modifier so that code can be added to it.  
+## Marking a type for serialization
+To inform BinaryBundle that it should add `Serialize()` and `Deserialize()` methods to a class, record or struct, mark it with the `[BinaryBundle]` attribute. The type also needs to have a `partial` modifier so that code can be added to it.  
 ```csharp
 [BinaryBundle]
 public partial class SimpleClass {
     public int IntField;
 }
 ```
-BinaryBundle will create a `Serialize()` and `Deserialize()` method for this class, as well make the class implement `IBundleSerializable`. Since these fields are set from normal C# methods, they can not be marked `readonly`.
+BinaryBundle will create a `Serialize()` and `Deserialize()` method for this type, as well make the type implement `IBundleSerializable`. Since these fields are set from normal C# methods, they can not be marked `readonly`.
 
-## Writing a serializable class to a binary format
+## Writing a serializable type to a binary format
 You can now write the class to a binary format using the generated methods with the included `BundleDefaultWriter` and `BundleDefaultReader` classes. These are small wrappers around the standard library `BinaryWriter` and `BinaryReader` classes. If you want to use your own custom reader/writer, that's outlined here: [Using your own Reader, Writer and Interface](#Using-your-own-reader-writer-and-interface)
 ```csharp
 var bytes = new byte[0xFF];
@@ -49,7 +49,7 @@ Console.WriteLine(deserializedClass.IntField); // 42
 ```
 
 ## Serializable fields
-If any fields have types that implement the IBundleSerializable, either manually or from the generator, the serialization methods will be called on them as well. The `IBundleSerializable` type will not be instantiated by the deserialization method, make sure it's created before `Deserialize` is called!
+If any fields or properties have types that implement the IBundleSerializable, either manually or from the generator, the serialization methods will be called on them as well. The `IBundleSerializable` type will not be instantiated by the deserialization method, make sure it's created before `Deserialize` is called!
 ```csharp
 [BinaryBundle]
 public partial class NestedClass {
@@ -88,6 +88,14 @@ static class VectorSerializeExtension {
 }
 ```
 Defining these methods as extension methods isn't necessary but it looks nice.
+
+# Attributes that can be used on fields
+There are some attributes that BinaryBundle will recognize and will generate different code for.
+## BundleIgnore
+Fields with the `BundleIgnore` attribute will be skipped entirely.
+## BundleLimit
+Collections with the `BundleLimit` attribute will be limited to the size defined in the first parameter. This can be useful to prevent huge allocations when receiving untrusted data.  
+The second parameter is optional and decides the behavior on collections that exceed the size to either clamp the size down when sent, or throw an exception. Deserializing a size that is read as too big will always throw an exception as this would be invalid data.
 
 # Using your own Reader, Writer and Interface
 While the provided `BundleDefaultWriter` and `BundleDefaultReader` classes are fairly fast and flexible, they are not perfect for every project. For that reason you can specify custom Writer and Reader classes to use for the serialization methods. This is done by specifying the classes used by the serializable interface.
