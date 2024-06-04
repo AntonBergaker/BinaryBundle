@@ -41,7 +41,49 @@ internal partial class InheritanceTest {
     }
 
     [BinaryBundle]
-    partial class ChildOfAbstractClass : ParentClass {
+    partial class ChildOfAbstractClass : AbstractParentClass {
         public int B;
+    }
+
+
+    [Test]
+    public void AbstractParent() {
+        var childClass = new ChildOfAbstractClass() {
+            A = 1,
+            B = 2
+        };
+
+        var deserializedClass = TestUtils.MakeSerializedCopy(childClass);
+        Assert.AreEqual(childClass.A, deserializedClass.A);
+        Assert.AreEqual(childClass.B, deserializedClass.B);
+    }
+
+    class ExplicitInterfaceClass : IBundleSerializable {
+        public int A;
+        public virtual void Deserialize(BundleDefaultReader reader) {
+            A = reader.ReadInt32();
+        }
+
+        public virtual void Serialize(BundleDefaultWriter writer) {
+            writer.WriteInt32(A);
+        }
+    }
+
+
+    [BinaryBundle]
+    partial class ChildOfExplicitClass : ExplicitInterfaceClass {
+        public int B;
+    }
+
+    [Test]
+    public void ChildOfExplicitInterface() {
+        var childClass = new ChildOfExplicitClass() {
+            A = 1,
+            B = 2
+        };
+
+        var deserializedClass = TestUtils.MakeSerializedCopy(childClass);
+        Assert.AreEqual(childClass.A, deserializedClass.A);
+        Assert.AreEqual(childClass.B, deserializedClass.B);
     }
 }
