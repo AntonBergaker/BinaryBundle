@@ -3,13 +3,13 @@ using System.Text;
 
 namespace BinaryBundle.Generator;
 
-class CodeBuilder {
-    private StringBuilder builder;
-    private int indent;
+public class CodeBuilder {
+    private StringBuilder _builder;
+    private int _indentation;
 
     public CodeBuilder() {
-        builder = new StringBuilder();
-        indent = 0;
+        _builder = new StringBuilder();
+        _indentation = 0;
     }
 
     public void AddLine(string line) {
@@ -19,12 +19,12 @@ class CodeBuilder {
             }
             return;
         }
-        builder.AppendLine(new string('\t', indent) + line);
+        _builder.AppendLine(new string('\t', _indentation) + line);
     }
 
     public void AddLines(params string[] lines) {
         foreach (string line in lines) {
-            builder.AppendLine(new string('\t', indent) + line);
+            _builder.AppendLine(new string('\t', _indentation) + line);
         }
     }
 
@@ -34,7 +34,7 @@ class CodeBuilder {
     }
 
     public void StartBlock(string blockStart) {
-        AddLine(blockStart + "{");
+        AddLine(blockStart + " {");
         Indent();
     }
 
@@ -44,14 +44,14 @@ class CodeBuilder {
     }
 
     public void Indent() {
-        indent++;
+        _indentation++;
     }
 
     public void Unindent() {
-        indent--;
+        _indentation--;
     }
 
     public override string ToString() {
-        return builder.ToString();
+        return _builder.ToString();
     }
 }

@@ -42,27 +42,36 @@ internal class TypeGeneratorTuple : TypeGenerator<TypeGeneratorTuple.TupleTypeDa
         return true;
     }
 
-    public override SerializationMethods EmitMethods(TupleTypeData typeData, EmitContext context) {
+    public override SerializationMethods EmitMethods(TupleTypeData typeData, CurrentEmitData emitData, EmitContext context) {
         var (fieldName, elements) = typeData;
+        var depth = emitData.Depth; ;
         return new(
             (code) => {
-                code.StartBlock();
+                if (emitData.CanHaveNeighbors) {
+                    code.StartBlock();
+                }
                 code.AddLine($"var ({string.Join(", ", elements.Select(x => x.typeData.FieldName))}) = {fieldName};");
                 foreach (var element in elements) {
-                    var methods = _generators.EmitMethods(element.typeData, context);
+                    var methods = _generators.EmitMethods(element.typeData, new(depth + 1, true), context);
                     methods.WriteSerializeMethod(code);
                 }
-                code.EndBlock();
+                if (emitData.CanHaveNeighbors) {
+                    code.EndBlock();
+                }
             },
             (code) => {
-                code.StartBlock();
+                if (emitData.CanHaveNeighbors) {
+                    code.StartBlock();
+                }
                 foreach (var element in elements) {
                     code.AddLine($"{element.typeName} {element.typeData.FieldName} = default;");
-                    var methods = _generators.EmitMethods(element.typeData, context);
+                    var methods = _generators.EmitMethods(element.typeData, new(depth + 1, true), context);
                     methods.WriteDeserializeMethod(code);
                 }
                 code.AddLine($"{fieldName} = ({string.Join(", ", elements.Select(x => x.typeData.FieldName))});");
-                code.EndBlock();
+                if (emitData.CanHaveNeighbors) {
+                    code.EndBlock();
+                }
             }
         );
     }

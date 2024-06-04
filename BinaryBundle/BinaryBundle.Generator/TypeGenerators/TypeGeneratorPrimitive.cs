@@ -26,7 +26,7 @@ internal class TypeGeneratorPrimitive : TypeGenerator<TypeGeneratorPrimitive.Pri
         { "string?", "String" },
     };
 
-    public override SerializationMethods EmitMethods(PrimitiveTypeData typeData, EmitContext context) {
+    public override SerializationMethods EmitMethods(PrimitiveTypeData typeData, CurrentEmitData emitData, EmitContext context) {
 
         string serialize = $"writer.Write{typeData.MethodName}({typeData.FieldName});";
         string deserialize = $"{typeData.FieldName} = reader.Read{typeData.MethodName}();";

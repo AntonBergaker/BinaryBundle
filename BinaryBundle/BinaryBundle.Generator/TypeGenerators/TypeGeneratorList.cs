@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis;
 namespace BinaryBundle.Generator.TypeGenerators; 
 
 internal class TypeGeneratorList : TypeGenerator<TypeGeneratorList.ListTypeData> {
-    internal record ListTypeData(string FieldName, int Depth, string InnerType, FieldTypeData UnderlyingType) : FieldTypeData(FieldName);
+    internal record ListTypeData(string FieldName, string InnerType, LimitData? LimitData, FieldTypeData UnderlyingType) : FieldTypeData(FieldName);
 
     private readonly TypeGeneratorCollection _generators;
 
@@ -33,27 +33,40 @@ internal class TypeGeneratorList : TypeGenerator<TypeGeneratorList.ListTypeData>
             return false;
         }
 
-        result = new(currentField.FieldName, depth, innerType.ToDisplayString(), innerTypeData!);
+        result = new(currentField.FieldName, innerType.ToDisplayString(), currentField.Limit, innerTypeData!);
         return true;
     }
 
-    public override SerializationMethods EmitMethods(ListTypeData typeData, EmitContext context) {
-        var (fieldName, depth, innerType, innerTypeData) = typeData;
-        var innerTypeMethods = _generators.EmitMethods(innerTypeData, context);
+    public override SerializationMethods EmitMethods(ListTypeData typeData, CurrentEmitData emitData, EmitContext context) {
+        var (fieldName, innerType, limitData, innerTypeData) = typeData;
+        var depth = emitData.Depth;
+        var hasNeighbors = emitData.CanHaveNeighbors;
+        var innerTypeMethods = _generators.EmitMethods(innerTypeData, new(depth + 1, false), context);
         string tempVariable = GetTempVariable(depth);
         string indexVariable = depth == 0 ? "i" : "i" + depth;
-        string sizeVariable = depth == 0 ? "size" : "size" + depth;
+        string sizeVariable = GetSizeVariable(depth);
 
         return new((code) => {
-            code.AddLine($"{BinaryBundleGenerator.WriteSizeMethodName}(writer, {fieldName}.Count);");
-            code.StartBlock($"for (int {indexVariable} = 0; {indexVariable} < {fieldName}.Count; {indexVariable}++)");
+            if (hasNeighbors) {
+                code.StartBlock();
+            }
+            code.AddLine($"int {sizeVariable} = {fieldName}.Count;");
+            EmitWriteCollectionSizeWithLimits(code, sizeVariable, limitData);
+
+            code.StartBlock($"for (int {indexVariable} = 0; {indexVariable} < {sizeVariable}; {indexVariable}++)");
             code.AddLine($"{innerType} {tempVariable} = {fieldName}[{indexVariable}];");
             innerTypeMethods.WriteSerializeMethod(code);
             code.EndBlock();
+            if (hasNeighbors) {
+                code.EndBlock();
+            }
         }, (code) => {
-            code.StartBlock();
+            if (hasNeighbors) {
+                code.StartBlock();
+            }
 
-            code.AddLine($"int {sizeVariable} = {BinaryBundleGenerator.ReadSizeMethodName}(reader);");
+            EmitReadCollectionSizeWithLimits(code, sizeVariable, limitData);
+
             code.AddLine($"{fieldName} = BinaryBundle.BinaryBundleHelpers.ClearListAndPrepareCapacity({fieldName}, {sizeVariable});");
             code.StartBlock($"for (int {indexVariable} = 0; {indexVariable} < {sizeVariable}; {indexVariable}++)");
             code.AddLine($"{innerType} {tempVariable} = default;");
@@ -62,7 +75,9 @@ internal class TypeGeneratorList : TypeGenerator<TypeGeneratorList.ListTypeData>
 
             code.EndBlock();
 
-            code.EndBlock();
+            if (hasNeighbors) {
+                code.EndBlock();
+            }
         });
     }
 }

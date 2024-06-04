@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace BinaryBundle.Generator.TypeGenerators; 
 
 internal class TypeGeneratorArray : TypeGenerator<TypeGeneratorArray.ArrayTypeData> {
-    internal record ArrayTypeData(string FieldName, int Depth, int Rank, string IndexVariable, string InnerTypeName, FieldTypeData UnderlyingType) : FieldTypeData(FieldName);
+    internal record ArrayTypeData(string FieldName, int Rank, LimitData? LimitData,string InnerTypeName, FieldTypeData UnderlyingType) : FieldTypeData(FieldName);
 
     private readonly TypeGeneratorCollection _generators;
 
@@ -36,31 +33,44 @@ internal class TypeGeneratorArray : TypeGenerator<TypeGeneratorArray.ArrayTypeDa
             return false;
         }
 
-        result = new(fieldData.FieldName, depth, rank, indexVariable, arrayType.ElementType.ToDisplayString(), innerTypeData!);
+        result = new(fieldData.FieldName, rank, fieldData.Limit, arrayType.ElementType.ToDisplayString(), innerTypeData!);
         return true;
     }
 
-    public override SerializationMethods EmitMethods(ArrayTypeData typeData, EmitContext context) {
-        var (fieldName, depth, rank, indexVariable, innerTypeName, underlyingTypeData) = typeData;
+    public override SerializationMethods EmitMethods(ArrayTypeData typeData, CurrentEmitData emitData, EmitContext context) {
+        var (fieldName, rank, limit, innerTypeName, underlyingTypeData) = typeData;
+        var depth = emitData.Depth;
 
-        var emitMethods = _generators.EmitMethods(underlyingTypeData, context);
+        var emitMethods = _generators.EmitMethods(underlyingTypeData, new(depth+1, false), context);
 
         if (rank == 1) {
+            var indexVariable = "i" + GetDepthNr(depth);
             return new(
                 (codeBuilder) => {
-                    codeBuilder.AddLine($"{BinaryBundleGenerator.WriteSizeMethodName}(writer, {fieldName}.Length);");
+                    if (emitData.CanHaveNeighbors) {
+                        codeBuilder.StartBlock();
+                    }
+                    var sizeVariable = GetSizeVariable(depth);
+                    codeBuilder.AddLine($"int {sizeVariable} = {fieldName}.Length;");
+                    EmitWriteCollectionSizeWithLimits(codeBuilder, $"{sizeVariable}", limit);
 
-                    codeBuilder.AddLine($"for (int {indexVariable} = 0; {indexVariable} < {fieldName}.Length; {indexVariable}++) {{");
-                    codeBuilder.Indent();
+                    codeBuilder.StartBlock($"for (int {indexVariable} = 0; {indexVariable} < {sizeVariable}; {indexVariable}++)");
 
                     emitMethods.WriteSerializeMethod(codeBuilder);
 
                     codeBuilder.EndBlock();
-
+                    if (emitData.CanHaveNeighbors) {
+                        codeBuilder.EndBlock();
+                    }
                 },
                 (codeBuilder) => {
                     // So our stored field size doesn't have name conflicts, add a code block
-                    codeBuilder.AddLine($"{fieldName} = BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers({fieldName}, {BinaryBundleGenerator.ReadSizeMethodName}(reader));");
+                    if (emitData.CanHaveNeighbors) {
+                        codeBuilder.StartBlock();
+                    }
+                    var sizeVariable = GetSizeVariable(depth);
+                    EmitReadCollectionSizeWithLimits(codeBuilder, $"{sizeVariable}", limit);
+                    codeBuilder.AddLine($"{fieldName} = BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers({fieldName}, {sizeVariable});");
 
                     codeBuilder.AddLine($"for (int {indexVariable} = 0; {indexVariable} < {fieldName}.Length; {indexVariable}++) {{");
                     codeBuilder.Indent();
@@ -69,7 +79,9 @@ internal class TypeGeneratorArray : TypeGenerator<TypeGeneratorArray.ArrayTypeDa
 
                     codeBuilder.Unindent();
                     codeBuilder.AddLine("}");
-
+                    if (emitData.CanHaveNeighbors) {
+                        codeBuilder.EndBlock();
+                    }
                 }
             );
         } 

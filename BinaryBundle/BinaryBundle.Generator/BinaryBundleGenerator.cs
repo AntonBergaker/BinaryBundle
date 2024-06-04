@@ -12,15 +12,10 @@ namespace BinaryBundle.Generator;
 [Generator]
 public partial class BinaryBundleGenerator : IIncrementalGenerator {
     public const string IgnoreAttributeName = "BinaryBundle.BundleIgnoreAttribute";
-    public const string IgnoreAttributeNameWithGlobal = $"global::{IgnoreAttributeName}";
     
-    public const string LimitAttributeName = "global::BinaryBundle.BundleLimitAttribute";
-
-    public const string WriteSizeMethodName = "BinaryBundle.BinaryBundleHelpers.WriteCollectionSize";
-    public const string ReadSizeMethodName = "BinaryBundle.BinaryBundleHelpers.ReadCollectionSize";
+    public const string LimitAttributeName = "BinaryBundle.BundleLimitAttribute";
 
     public const string BundleAttributeName = "BinaryBundle.BinaryBundleAttribute";
-    public const string BundleAttributeNameWithGlobal = $"global::{BundleAttributeName}";
 
     public const string TypeExtensionSerializationName = "BinaryBundle.BundleSerializeTypeExtensionAttribute";
     public const string TypeExtensionDeserializationName = "BinaryBundle.BundleDeserializeTypeExtensionAttribute";
@@ -85,76 +80,62 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
 
         CodeBuilder code = new CodeBuilder();
 
-        code.AddLine($"namespace {@class.Namespace} {{");
-        code.Indent();
+        code.StartBlock($"namespace {@class.Namespace}");
 
         foreach (var parentClass in @class.ParentClasses) {
-            code.AddLine($"partial {GetIdentifierForClassType(parentClass.classType)} {parentClass.name} {{");
-            code.Indent();
+            code.StartBlock($"partial {GetIdentifierForClassType(parentClass.classType)} {parentClass.name}");
         }
 
-        code.AddLines($"partial {GetIdentifierForClassType(@class.ClassType)} {@class.Name} : {interfaceName} {{");
-        code.Indent();
+        code.StartBlock($"partial {GetIdentifierForClassType(@class.ClassType)} {@class.Name} : {interfaceName}");
 
 
         string writerAndParameter = $"{writerName} writer";
 
         if (@class.InheritsSerializable) {
-            code.AddLine($"public override void Serialize({writerAndParameter}) {{");
-            code.Indent();
+            code.StartBlock($"public override void Serialize({writerAndParameter})");
             code.AddLine($"base.Serialize(writer);");
         }
         else if (@class.ClassType is BundleClassType.Class or BundleClassType.Record) {
-            code.AddLine($"public virtual void Serialize({writerAndParameter}) {{");
-            code.Indent();
+            code.StartBlock($"public virtual void Serialize({writerAndParameter})");
         }
         else {
-            code.AddLine($"public void Serialize({writerAndParameter}) {{");
-            code.Indent();
+            code.StartBlock($"public void Serialize({writerAndParameter})");
         }
 
         foreach (var members in @class.Members) {
-            var methods = _typeGenerators.EmitMethods(members, fieldContext);
+            var methods = _typeGenerators.EmitMethods(members, new(0, true), fieldContext);
             methods.WriteSerializeMethod(code);
         }
 
-        code.Unindent();
-        code.AddLine("}");
+        code.EndBlock();
 
         string readerAndParameter = $"{readerName} reader";
         if (@class.InheritsSerializable) {
-            code.AddLine($"public override void Deserialize({readerAndParameter}) {{");
-            code.Indent();
+            code.StartBlock($"public override void Deserialize({readerAndParameter})");
             code.AddLine($"base.Deserialize(reader);");
         } else if (@class.ClassType is BundleClassType.Class or BundleClassType.Record) {
-            code.AddLine($"public virtual void Deserialize({readerAndParameter}) {{");
-            code.Indent();
+            code.StartBlock($"public virtual void Deserialize({readerAndParameter})");
         }
         else {
-            code.AddLine($"public void Deserialize({readerAndParameter}) {{");
-            code.Indent();
+            code.StartBlock($"public void Deserialize({readerAndParameter})");
         }
 
         foreach (var members in @class.Members) {
-            var methods = _typeGenerators.EmitMethods(members, fieldContext);
+            var methods = _typeGenerators.EmitMethods(members, new(0, true), fieldContext);
             methods.WriteDeserializeMethod(code);
         }
 
-        code.Unindent();
-        code.AddLine("}");
+        code.EndBlock();
 
         // End of class
-        code.Unindent();
-        code.AddLine("}");
+        code.EndBlock();
 
         foreach (var _ in @class.ParentClasses) {
-            code.Unindent();
-            code.AddLine("}");
+            code.EndBlock();
         }
 
         // End of namespace
-        code.Unindent();
-        code.AddLine("}");
+        code.EndBlock();
 
         context.AddSource($"{@class.Namespace}.{@class.Name}.g", code.ToString());
 
