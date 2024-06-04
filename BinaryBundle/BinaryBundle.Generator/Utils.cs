@@ -10,8 +10,8 @@ namespace BinaryBundle.Generator;
 internal class Utils {
 
     public static bool TypeImplements(ITypeSymbol type, string typeName) {
-        return (type.Name == typeName ||
-                (type.AllInterfaces.Any(x => x.Name == typeName)));
+        return (type.ToDisplayString() == typeName ||
+                (type.AllInterfaces.Any(x => x.ToDisplayString() == typeName)));
     }
 
     public static bool TypeImplements(TypeInfo typeInfo, string typeName) {
