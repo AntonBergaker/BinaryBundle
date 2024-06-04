@@ -7,8 +7,6 @@ namespace BinaryBundle.Generator.TypeGenerators;
 internal class TypeGeneratorPrimitive : TypeGenerator<TypeGeneratorPrimitive.PrimitiveTypeData> {
     internal record PrimitiveTypeData(string MethodName, string FieldName) : FieldTypeData(FieldName);
 
-    private const string SystemName = $"global::{nameof(System)}.";
-
     // Get our types
     private static Dictionary<string, string> _primitiveTypes = new() {
         { "bool", "Bool" },
@@ -38,6 +36,11 @@ internal class TypeGeneratorPrimitive : TypeGenerator<TypeGeneratorPrimitive.Pri
 
     public override bool TryGetFieldData(CurrentFieldData currentField, FieldDataContext context, out PrimitiveTypeData? result) {
         if (_primitiveTypes.TryGetValue(currentField.Type.ToDisplayString(), out string methodName) == false) {
+            result = null;
+            return false;
+        }
+
+        if (currentField.IsReadOnly) {
             result = null;
             return false;
         }

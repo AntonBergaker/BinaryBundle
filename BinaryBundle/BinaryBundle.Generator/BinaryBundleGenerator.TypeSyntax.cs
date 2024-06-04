@@ -26,7 +26,9 @@ public partial class BinaryBundleGenerator {
         DefaultInterfaceDeclaration defaultInterface, 
         Dictionary<string, TypeExtensionMethods> serializationMethods, 
         CancellationToken token) {
-        
+
+        var classType = GetBundleClassType(classTypeSymbol);
+
         HashSet<string> autoBackedProperties = new(
             classTypeSymbol.GetMembers().OfType<IFieldSymbol>().Where(x => x.AssociatedSymbol != null).Select(x => x.AssociatedSymbol!.Name)
         );
@@ -42,7 +44,8 @@ public partial class BinaryBundleGenerator {
                     continue;
                 }
 
-                var currentData = new CurrentFieldData(field.Type, member.Name, 0, false);
+                var currentData = new CurrentFieldData(field.Type, member.Name,
+                    Depth: 0, IsAccessor: false, Limit: 0, IsReadOnly: field.IsReadOnly);
                 var context = new FieldDataContext(defaultInterface.Name, serializationMethods);
                 if (_typeGenerators.TryGetFieldData(currentData, context, out var result) == true) {
                     members.Add(result!);
@@ -53,7 +56,13 @@ public partial class BinaryBundleGenerator {
                 if (autoBackedProperties.Contains(member.Name) == false) {
                     continue;
                 }
-                var currentData = new CurrentFieldData(property.Type, member.Name, 0, true);
+
+                bool readOnly = 
+                    property.IsReadOnly ||
+                    (property.SetMethod?.ToString().EndsWith("init") ?? false); // There must be a better way to detect init properties...
+                
+                var currentData = new CurrentFieldData(property.Type, member.Name, 
+                    Depth: 0, IsAccessor: true, Limit: 0, IsReadOnly: readOnly);
                 var context = new FieldDataContext(defaultInterface.Name, serializationMethods);
                 if (_typeGenerators.TryGetFieldData(currentData, context, out var result) == true) {
                     members.Add(result!);
@@ -78,19 +87,30 @@ public partial class BinaryBundleGenerator {
                              (Utils.TypeImplements(baseType, defaultInterface.Name) ||
                               Utils.TypeOrInheritanceHasAttribute(baseType, BundleAttributeNameWithGlobal));
 
-        var classType = classTypeSymbol.TypeKind == TypeKind.Struct ? BundledType.BundleClassType.Struct : BundledType.BundleClassType.Class;
 
-        List<(string, BundledType.BundleClassType)>? parents = null;
+        List<(string, BundleClassType)>? parents = null;
         var containingClass = classTypeSymbol.ContainingType;
         while (containingClass != null) {
             parents ??= [];
             parents.Insert(0, (
                 containingClass.Name,
-                containingClass.TypeKind == TypeKind.Struct ? BundledType.BundleClassType.Struct : BundledType.BundleClassType.Class));
+                GetBundleClassType(containingClass)));
             containingClass = containingClass.ContainingType;
         }
 
         return new(classTypeSymbol.Name, @namespace?.ToString(), inheritsSerializable, classType, parents?.ToArray() ?? [], members.ToArray());
+    }
+
+    private BundleClassType GetBundleClassType(ITypeSymbol symbol) {
+        if (symbol.IsRecord) {
+            return symbol.TypeKind == TypeKind.Struct ? 
+                BundleClassType.RecordStruct : 
+                BundleClassType.Record;
+        }
+        if (symbol.TypeKind == TypeKind.Struct) {
+            return BundleClassType.Struct;
+        }
+        return BundleClassType.Class;
     }
 
 }

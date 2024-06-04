@@ -35,7 +35,7 @@ abstract class TypeGenerator<T> : ITypeGenerator where T: FieldTypeData {
     public abstract SerializationMethods EmitMethods(T typeData, EmitContext context);
 }
 
-record struct CurrentFieldData(ITypeSymbol Type, string FieldName, int Depth, bool IsAccessor, int Limit = int.MaxValue);
+record struct CurrentFieldData(ITypeSymbol Type, string FieldName, int Depth, bool IsAccessor, int Limit = int.MaxValue, bool IsReadOnly = false);
 record FieldDataContext(string InterfaceName, Dictionary<string, TypeExtensionMethods> TypeExtensionMethods);
 
 record EmitContext(string InterfaceName, string WriterName, string ReaderName);
