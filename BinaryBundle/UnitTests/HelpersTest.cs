@@ -7,7 +7,7 @@ namespace UnitTests;
 internal class HelpersTest {
 
     [Test]
-    public void TestCollectionSizeWritingRandomNumbers() {
+    public void CollectionSizeWritingRandomNumbers() {
 
         Random random = new();
         byte[] buffer = new byte[0x8];
@@ -27,17 +27,17 @@ internal class HelpersTest {
         }
     }
 
-    private readonly (byte[] rawBytes, int value)[] knownNumbers = {
+    private readonly (byte[] rawBytes, int value)[] knownNumbers = [
         (new byte[] {0b0_0000001}, 0b0000001),
         (new byte[] {0b1_0010001, 0b0_0000001}, 0b0010001_0000001),
         (new byte[] {0b1_1111111, 0b0_1111111}, 0b1111111_1111111),
         (new byte[] {0b1_0010001, 0b1_0000001, 0b0_1000011}, 0b0010001_0000001_1000011),
         (new byte[] {0b1_0010001, 0b1_0000000, 0b0_0000000}, 0b0010001_0000000_0000000),
         (new byte[] {0b1_1111111, 0b1_1111111, 0b0_1111111}, 0b1111111_1111111_1111111)
-    };
+    ];
 
     [Test]
-    public void TestCollectionSizeWriteKnownNumbers() {
+    public void CollectionSizeWriteKnownNumbers() {
         byte[] buffer = new byte[0x8];
         BundleDefaultWriter writer = new(buffer);
         BundleDefaultReader reader = new(buffer);
@@ -58,7 +58,7 @@ internal class HelpersTest {
     }
 
     [Test]
-    public void TestCollectionSizeReadKnownNumbers() {
+    public void CollectionSizeReadKnownNumbers() {
         byte[] buffer = new byte[0x8];
         BundleDefaultWriter writer = new(buffer);
         BundleDefaultReader reader = new(buffer);

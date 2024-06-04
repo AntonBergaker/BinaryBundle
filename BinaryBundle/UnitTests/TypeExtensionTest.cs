@@ -11,7 +11,7 @@ internal partial class TypeExtensionTest {
     }
 
     [Test]
-    public void TestConvertedType() {
+    public void TypeExtensions() {
         VectorClass @class = new() {
             VectorField = new Vector2(5, 15),
         };

@@ -6,11 +6,11 @@ namespace UnitTests.ComplexTypes;
 public partial class DictionaryTests {
     [BinaryBundle]
     private partial class DictionaryClass {
-        public readonly Dictionary<string, int> Dictionary = new();
+        public readonly Dictionary<string, int> Dictionary = [];
     }
 
     [Test]
-    public void TestDictionary() {
+    public void SimpleDictionary() {
         DictionaryClass @class = new() {
             Dictionary = {
                 {"Nice", 69},

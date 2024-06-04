@@ -41,7 +41,7 @@ public class BundleDefaultReader : IDisposable, IBundleReader {
         reader = new BinaryReader(stream);
     }
 
-    private readonly List<byte> byteList = new List<byte>();
+    private readonly List<byte> byteList = [];
     /// <summary>
     /// Reads a null terminated UTF8 string and advances the stream to the end of the string.
     /// </summary>

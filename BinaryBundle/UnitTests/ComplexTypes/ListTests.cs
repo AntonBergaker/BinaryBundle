@@ -6,25 +6,25 @@ namespace UnitTests.ComplexTypes;
 public partial class ListTests {
     [BinaryBundle]
     private partial class ListClass {
-        public List<int> List = new();
+        public List<int> List = [];
 
-        public List<int[]> ListOfArrays = new();
+        public List<int[]> ListOfArrays = [];
 
-        public List<List<string>> ListOfLists = new();
+        public List<List<string>> ListOfLists = [];
     }
 
     [Test]
     public void ComplexList() {
         ListClass @class = new() {
-            List = { 13, 41, 64, 63, 85 },
-            ListOfArrays = new() {
-                new[] { 2, 3, 4 },
-                new[] { 5, 6, 7 },
-            },
-            ListOfLists = new() {
-                new() { "Kokosboll", "Vanilla", "Dorito" },
-                new() { "Dossie", "Shroomy" },
-            },
+            List = [13, 41, 64, 63, 85],
+            ListOfArrays = [
+                [2, 3, 4],
+                [5, 6, 7],
+            ],
+            ListOfLists = [
+                ["Chocoball", "Vanilla", "Dorito" ],
+                [ "Dossie", "Punschroll" ],
+            ],
         };
 
         var deserializedClass = TestUtils.MakeSerializedCopy(@class);
@@ -42,7 +42,7 @@ public partial class ListTests {
             public float Y;
         }
 
-        public List<MyValueType> ValueTypes = new();
+        public List<MyValueType> ValueTypes = [];
     }
 
     [Test]
@@ -70,7 +70,7 @@ public partial class ListTests {
 
     [BinaryBundle]
     public partial class PropertyListClass {
-        public List<int> Ints { get; private set; } = new();
+        public List<int> Ints { get; private set; } = [];
     }
 
     [Test]

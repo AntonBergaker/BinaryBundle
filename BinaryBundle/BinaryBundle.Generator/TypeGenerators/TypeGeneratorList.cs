@@ -2,17 +2,19 @@
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 
-namespace BinaryBundle.Generator.FieldGenerators; 
+namespace BinaryBundle.Generator.TypeGenerators; 
 
-internal class FieldGeneratorList : FieldGenerator {
-    private readonly FieldGeneratorCollection generators;
+internal class TypeGeneratorList : TypeGenerator<TypeGeneratorList.ListTypeData> {
+    internal record ListTypeData(string FieldName, int Depth, string InnerType, FieldTypeData UnderlyingType) : FieldTypeData(FieldName);
 
-    public FieldGeneratorList(FieldGeneratorCollection generators) {
-        this.generators = generators;
+    private readonly TypeGeneratorCollection _generators;
+
+    public TypeGeneratorList(TypeGeneratorCollection generators) {
+        this._generators = generators;
     }
 
-    public override bool TryMatch(ITypeSymbol type, string fieldName, int depth, bool isAccessor, FieldContext context, out TypeMethods? result) {
-        if (type is not INamedTypeSymbol namedType) {
+    public override bool TryGetFieldData(CurrentFieldData currentField, FieldDataContext context, out ListTypeData? result) {
+        if (currentField.Type is not INamedTypeSymbol namedType) {
             result = null;
             return false;
         }
@@ -22,20 +24,27 @@ internal class FieldGeneratorList : FieldGenerator {
             return false;
         }
 
-        string indexVariable = depth == 0 ? "i" : "i" + depth;
+        ITypeSymbol innerType = namedType.TypeArguments[0];
+        var depth = currentField.Depth;
         string tempVariable = GetTempVariable(depth);
 
-        ITypeSymbol innerType = namedType.TypeArguments[0];
-
-        if (generators.TryMatch(innerType, tempVariable, depth + 1, false, context, out var innerTypeMethods) == false) {
+        if (_generators.TryGetFieldData(new(innerType, tempVariable, depth + 1, false), context, out var innerTypeData) == false) {
             result = null;
             return false;
         }
-        _ = innerTypeMethods ?? throw new Exception("Stop shouting at me, I can't fix it.");
 
+        result = new(currentField.FieldName, depth, innerType.ToDisplayString(), innerTypeData!);
+        return true;
+    }
 
+    public override SerializationMethods EmitMethods(ListTypeData typeData, EmitContext context) {
+        var (fieldName, depth, innerType, innerTypeData) = typeData;
+        var innerTypeMethods = _generators.EmitMethods(innerTypeData, context);
+        string tempVariable = GetTempVariable(depth);
+        string indexVariable = depth == 0 ? "i" : "i" + depth;
         string sizeVariable = depth == 0 ? "size" : "size" + depth;
-        result = new ((code) => {
+
+        return new((code) => {
             code.AddLine($"{BinaryBundleGenerator.WriteSizeMethodName}(writer, {fieldName}.Count);");
             code.StartBlock($"for (int {indexVariable} = 0; {indexVariable} < {fieldName}.Count; {indexVariable}++)");
             code.AddLine($"{innerType} {tempVariable} = {fieldName}[{indexVariable}];");
@@ -55,6 +64,5 @@ internal class FieldGeneratorList : FieldGenerator {
 
             code.EndBlock();
         });
-        return true;
     }
 }
