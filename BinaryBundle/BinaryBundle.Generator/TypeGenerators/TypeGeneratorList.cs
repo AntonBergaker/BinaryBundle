@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis;
 namespace BinaryBundle.Generator.TypeGenerators; 
 
 internal class TypeGeneratorList : TypeGenerator<TypeGeneratorList.ListTypeData> {
-    internal record ListTypeData(string FieldName, string InnerType, LimitData? LimitData, FieldTypeData UnderlyingType) : FieldTypeData(FieldName);
+    internal record ListTypeData(string FieldName, string InnerType, LimitData? LimitData, bool IsReadOnly, FieldTypeData UnderlyingType) : FieldTypeData(FieldName);
 
     private readonly TypeGeneratorCollection _generators;
 
@@ -33,12 +33,12 @@ internal class TypeGeneratorList : TypeGenerator<TypeGeneratorList.ListTypeData>
             return false;
         }
 
-        result = new(currentField.FieldName, innerType.ToDisplayString(), currentField.Limit, innerTypeData!);
+        result = new(currentField.FieldName, innerType.ToDisplayString(), currentField.Limit, currentField.IsReadOnly, innerTypeData!);
         return true;
     }
 
     public override SerializationMethods EmitMethods(ListTypeData typeData, CurrentEmitData emitData, EmitContext context) {
-        var (fieldName, innerType, limitData, innerTypeData) = typeData;
+        var (fieldName, innerType, limitData, isReadOnly, innerTypeData) = typeData;
         var depth = emitData.Depth;
         var hasNeighbors = emitData.CanHaveNeighbors;
         var innerTypeMethods = _generators.EmitMethods(innerTypeData, new(depth + 1, false), context);
@@ -67,7 +67,11 @@ internal class TypeGeneratorList : TypeGenerator<TypeGeneratorList.ListTypeData>
 
             EmitReadCollectionSizeWithLimits(code, sizeVariable, limitData);
 
-            code.AddLine($"{fieldName} = BinaryBundle.BinaryBundleHelpers.ClearListAndPrepareCapacity({fieldName}, {sizeVariable});");
+            if (isReadOnly) {
+                code.AddLine($"BinaryBundle.BinaryBundleHelpers.ClearListAndPrepareCapacity({fieldName}, {sizeVariable});");
+            } else {
+                code.AddLine($"{fieldName} = BinaryBundle.BinaryBundleHelpers.ClearListAndPrepareCapacity({fieldName}, {sizeVariable});");
+            }
             code.StartBlock($"for (int {indexVariable} = 0; {indexVariable} < {sizeVariable}; {indexVariable}++)");
             code.AddLine($"{innerType} {tempVariable} = default;");
             innerTypeMethods.WriteDeserializeMethod(code);
