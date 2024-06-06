@@ -86,4 +86,19 @@ internal partial class InheritanceTest {
         Assert.AreEqual(childClass.A, deserializedClass.A);
         Assert.AreEqual(childClass.B, deserializedClass.B);
     }
+
+    [BinaryBundle]
+    sealed partial class SealedClass {
+        public string Nyeh = "";
+    }
+
+    [Test]
+    public void Sealed() {
+        var @class = new SealedClass() {
+            Nyeh = "Bleh"
+        };
+
+        var deserializedClass = TestUtils.MakeSerializedCopy(@class);
+        Assert.AreEqual(@class.Nyeh, deserializedClass.Nyeh);
+    }
 }

@@ -95,7 +95,7 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
             code.StartBlock($"public override void Serialize({writerAndParameter})");
             code.AddLine($"base.Serialize(writer);");
         }
-        else if (@class.ClassType is BundleClassType.Class or BundleClassType.Record) {
+        else if ((@class.ClassType is BundleClassType.Class or BundleClassType.Record) && @class.IsSealed == false) {
             code.StartBlock($"public virtual void Serialize({writerAndParameter})");
         }
         else {
@@ -113,7 +113,7 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
         if (@class.InheritsSerializable) {
             code.StartBlock($"public override void Deserialize({readerAndParameter})");
             code.AddLine($"base.Deserialize(reader);");
-        } else if (@class.ClassType is BundleClassType.Class or BundleClassType.Record) {
+        } else if (@class.ClassType is BundleClassType.Class or BundleClassType.Record && @class.IsSealed == false) {
             code.StartBlock($"public virtual void Deserialize({readerAndParameter})");
         }
         else {
