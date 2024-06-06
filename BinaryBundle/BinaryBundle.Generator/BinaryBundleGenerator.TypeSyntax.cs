@@ -109,7 +109,9 @@ public partial class BinaryBundleGenerator {
             containingClass = containingClass.ContainingType;
         }
 
-        return new(classTypeSymbol.Name, @namespace?.ToString(), inheritsSerializable, classType, parents?.ToArray() ?? [], members.ToArray());
+        return new(Name: classTypeSymbol.Name, Namespace: @namespace?.ToString(), 
+            InheritsSerializable: inheritsSerializable, IsSealed: classTypeSymbol.IsSealed, classType, 
+            parents?.ToArray() ?? [], members.ToArray());
     }
 
     private BundleClassType GetBundleClassType(ITypeSymbol symbol) {
