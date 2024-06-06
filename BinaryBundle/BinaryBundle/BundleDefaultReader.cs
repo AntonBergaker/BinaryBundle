@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace BinaryBundle;
@@ -56,7 +57,11 @@ public class BundleDefaultReader : IDisposable, IBundleReader {
             byteList.Add(readByte);
         }
 
+#if NET7_0_OR_GREATER
+        return Encoding.UTF8.GetString(CollectionsMarshal.AsSpan(byteList));
+#else
         return Encoding.UTF8.GetString(byteList.ToArray());
+#endif
     }
 
     /// <inheritdoc cref="BinaryReader.ReadChar()"/>
