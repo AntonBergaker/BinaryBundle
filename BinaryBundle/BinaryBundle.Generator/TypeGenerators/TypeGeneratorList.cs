@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 
 namespace BinaryBundle.Generator.TypeGenerators; 
 
@@ -46,7 +44,7 @@ internal class TypeGeneratorList : TypeGenerator<TypeGeneratorList.ListTypeData>
         string indexVariable = depth == 0 ? "i" : "i" + depth;
         string sizeVariable = GetSizeVariable(depth);
 
-        return new((code) => {
+        var serialize = (CodeBuilder code) => {
             if (hasNeighbors) {
                 code.StartBlock();
             }
@@ -60,11 +58,11 @@ internal class TypeGeneratorList : TypeGenerator<TypeGeneratorList.ListTypeData>
             if (hasNeighbors) {
                 code.EndBlock();
             }
-        }, (code) => {
+        };
+        var deserialize = (CodeBuilder code) => {
             if (hasNeighbors) {
                 code.StartBlock();
             }
-
             EmitReadCollectionSizeWithLimits(code, sizeVariable, limitData);
 
             if (isReadOnly) {
@@ -73,15 +71,34 @@ internal class TypeGeneratorList : TypeGenerator<TypeGeneratorList.ListTypeData>
                 code.AddLine($"{fieldName} = BinaryBundle.BinaryBundleHelpers.ClearListAndPrepareCapacity({fieldName}, {sizeVariable});");
             }
             code.StartBlock($"for (int {indexVariable} = 0; {indexVariable} < {sizeVariable}; {indexVariable}++)");
-            code.AddLine($"{innerType} {tempVariable} = default;");
-            innerTypeMethods.WriteDeserializeMethod(code);
+            code.AddLine($"{innerType} {tempVariable};");
+            innerTypeMethods.WriteConstructMethod(code);
             code.AddLine($"{fieldName}.Add({tempVariable});");
 
             code.EndBlock();
-
             if (hasNeighbors) {
                 code.EndBlock();
             }
-        });
+        };
+        var construct = (CodeBuilder code) => {
+            if (hasNeighbors) {
+                code.StartBlock();
+            }
+            EmitReadCollectionSizeWithLimits(code, sizeVariable, limitData);
+
+            code.AddLine($"{fieldName} = new System.Collections.Generic.List<{innerType}>();");
+            
+            code.StartBlock($"for (int {indexVariable} = 0; {indexVariable} < {sizeVariable}; {indexVariable}++)");
+            code.AddLine($"{innerType} {tempVariable};");
+            innerTypeMethods.WriteConstructMethod(code);
+            code.AddLine($"{fieldName}.Add({tempVariable});");
+
+            code.EndBlock();
+            if (hasNeighbors) {
+                code.EndBlock();
+            }
+        };
+
+        return new(construct, serialize, deserialize);
     }
 }

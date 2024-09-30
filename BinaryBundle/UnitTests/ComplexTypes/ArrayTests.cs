@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using System;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Security.Claims;
 
 namespace UnitTests.ComplexTypes;

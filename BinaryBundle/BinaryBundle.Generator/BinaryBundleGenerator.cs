@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Claims;
 using BinaryBundle.Generator.TypeGenerators;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -26,6 +27,7 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
         _typeGenerators = new();
 
         _typeGenerators.AddRange(new ITypeGenerator[] {
+            new TypeGeneratorNullable(_typeGenerators),
             new TypeGeneratorPrimitive(),
             new TypeGeneratorEnum(_typeGenerators),
             new TypeGeneratorSerializable(),
@@ -58,87 +60,112 @@ public partial class BinaryBundleGenerator : IIncrementalGenerator {
         
         var bundledTypes = typesWithAttribute.Combine(interfaceAndMethod).Select((x, c) => BundledTypeTransform(x.Left, x.Right.Left, x.Right.Right, c)).WhereNotNull();
 
-        var everything = bundledTypes.Combine(interfaceWithAttribute);
+        var everything = bundledTypes.Collect().Combine(interfaceWithAttribute);
 
         context.RegisterSourceOutput(everything, GenerateCode);
     }
 
 
     private void GenerateCode(SourceProductionContext context, (
-            BundledType @class,
+            ImmutableArray<BundledType> bundledTypes,
             DefaultInterfaceDeclaration @interface)
         data) {
 
+        var (bundledTypes, @interface) = data;
 
-        string interfaceName = data.@interface.Name;
-        string writerName = data.@interface.WriterName;
-        string readerName = data.@interface.ReaderName;
+        string interfaceName = @interface.Name;
+        string writerName = @interface.WriterName;
+        string readerName = @interface.ReaderName;
+        var fieldContext = new EmitContext(interfaceName, writerName, readerName, bundledTypes.ToDictionary(x => x.GetFullName()));
 
-        var @class = data.@class;
+        foreach (var @class in bundledTypes) {
 
-        var fieldContext = new EmitContext(interfaceName, writerName, readerName);
+            var code = new CodeBuilder();
 
-        CodeBuilder code = new CodeBuilder();
+            code.StartBlock($"namespace {@class.Namespace}");
 
-        code.StartBlock($"namespace {@class.Namespace}");
+            foreach (var parentClass in @class.ParentClasses) {
+                code.StartBlock($"partial {GetIdentifierForClassType(parentClass.classType)} {parentClass.name}");
+            }
 
-        foreach (var parentClass in @class.ParentClasses) {
-            code.StartBlock($"partial {GetIdentifierForClassType(parentClass.classType)} {parentClass.name}");
-        }
-
-        code.StartBlock($"partial {GetIdentifierForClassType(@class.ClassType)} {@class.Name} : {interfaceName}");
+            code.StartBlock($"partial {GetIdentifierForClassType(@class.ClassType)} {@class.Name} : {interfaceName}");
 
 
-        string writerAndParameter = $"{writerName} writer";
+            string writerAndParameter = $"{writerName} writer";
 
-        if (@class.InheritsSerializable) {
-            code.StartBlock($"public override void Serialize({writerAndParameter})");
-            code.AddLine($"base.Serialize(writer);");
-        }
-        else if ((@class.ClassType is BundleClassType.Class or BundleClassType.Record) && @class.IsSealed == false) {
-            code.StartBlock($"public virtual void Serialize({writerAndParameter})");
-        }
-        else {
-            code.StartBlock($"public void Serialize({writerAndParameter})");
-        }
+            if (@class.InheritsSerializable) {
+                code.StartBlock($"public override void Serialize({writerAndParameter})");
+                code.AddLine($"base.Serialize(writer);");
+            } else if ((@class.ClassType is BundleClassType.Class or BundleClassType.Record) && @class.IsSealed == false) {
+                code.StartBlock($"public virtual void Serialize({writerAndParameter})");
+            } else {
+                code.StartBlock($"public void Serialize({writerAndParameter})");
+            }
 
-        foreach (var members in @class.Members) {
-            var methods = _typeGenerators.EmitMethods(members, new(0, true), fieldContext);
-            methods.WriteSerializeMethod(code);
-        }
+            foreach (var members in @class.Members) {
+                var methods = _typeGenerators.EmitMethods(members, new(0, true), fieldContext);
+                methods.WriteSerializeMethod(code);
+            }
 
-        code.EndBlock();
-
-        string readerAndParameter = $"{readerName} reader";
-        if (@class.InheritsSerializable) {
-            code.StartBlock($"public override void Deserialize({readerAndParameter})");
-            code.AddLine($"base.Deserialize(reader);");
-        } else if (@class.ClassType is BundleClassType.Class or BundleClassType.Record && @class.IsSealed == false) {
-            code.StartBlock($"public virtual void Deserialize({readerAndParameter})");
-        }
-        else {
-            code.StartBlock($"public void Deserialize({readerAndParameter})");
-        }
-
-        foreach (var members in @class.Members) {
-            var methods = _typeGenerators.EmitMethods(members, new(0, true), fieldContext);
-            methods.WriteDeserializeMethod(code);
-        }
-
-        code.EndBlock();
-
-        // End of class
-        code.EndBlock();
-
-        foreach (var _ in @class.ParentClasses) {
             code.EndBlock();
+
+            string readerAndParameter = $"{readerName} reader";
+            if (@class.InheritsSerializable) {
+                code.StartBlock($"public override void Deserialize({readerAndParameter})");
+                code.AddLine($"base.Deserialize(reader);");
+            } else if (@class.ClassType is BundleClassType.Class or BundleClassType.Record && @class.IsSealed == false) {
+                code.StartBlock($"public virtual void Deserialize({readerAndParameter})");
+            } else {
+                code.StartBlock($"public void Deserialize({readerAndParameter})");
+            }
+
+            foreach (var members in @class.Members) {
+                var methods = _typeGenerators.EmitMethods(members, new(0, true), fieldContext);
+                methods.WriteDeserializeMethod(code);
+            }
+
+            code.EndBlock();
+
+            if (@class.ConstructorType == BundleConstructorType.FieldConstructor) {
+                var memberNames = @class.Members.ToDictionary(x => x.FieldName.ToLowerInvariant().Trim('_'));
+                var constructorParameters = @class.ConstructorParameters!.ToDictionary(x => x.Name.ToLowerInvariant().Trim('@'));
+
+                code.StartBlock($"public static {@class.Name} ConstructFromBuffer({readerAndParameter})");
+                foreach (var member in @class.Members) {
+                    var methods = _typeGenerators.EmitMethods(member, new(0, true), fieldContext);
+                    var parameter = constructorParameters[member.FieldName.ToLowerInvariant().Trim('_')];
+                    code.AddLine($"{parameter.Type} {member.FieldName};");
+                    methods.WriteConstructMethod(code);
+                }
+
+                code.AddLine($"return new {@class.Name}(");
+                code.Indent();
+
+                for (int i = 0; i < @class.ConstructorParameters!.Length; i++) {
+                    (string name, string type) = @class.ConstructorParameters[i];
+                    var memberName = memberNames[name.ToLowerInvariant().Trim('@')];
+                    code.AddLine(memberName.FieldName + (i == @class.ConstructorParameters.Length - 1 ? "" : ","));
+                    
+                }
+
+                code.Unindent();
+                code.AddLine(");");
+
+                code.EndBlock();
+            }
+
+            // End of class
+            code.EndBlock();
+
+            foreach (var _ in @class.ParentClasses) {
+                code.EndBlock();
+            }
+
+            // End of namespace
+            code.EndBlock();
+
+            context.AddSource($"{@class.GetFullName()}.g", code.ToString());
         }
-
-        // End of namespace
-        code.EndBlock();
-
-        context.AddSource($"{@class.Namespace}.{@class.Name}.g", code.ToString());
-
     }
 
     private string GetIdentifierForClassType(BundleClassType classType) => classType switch {

@@ -86,23 +86,28 @@ public record struct LimitData(int Limit, BundleLimitBehavior LimitBehavior);
 record FieldDataContext(string InterfaceName, Dictionary<string, TypeExtensionMethods> TypeExtensionMethods);
 
 public record struct CurrentEmitData(int Depth, bool CanHaveNeighbors);
-record EmitContext(string InterfaceName, string WriterName, string ReaderName);
+record EmitContext(string InterfaceName, string WriterName, string ReaderName, Dictionary<string, BundledType> BundledTypes);
 
 class SerializationMethods {
-    public SerializationMethods(string serialize, string deserialize) {
-        serializeMethod = (code) => code.AddLine(serialize);
-        deserializeMethod = (code) => code.AddLine(deserialize);
+    public SerializationMethods(string construct, string serialize, string deserialize) {
+        _constructMethod = (code) => code.AddLine(construct);
+        _serializeMethod = (code) => code.AddLine(serialize);
+        _deserializeMethod = (code) => code.AddLine(deserialize);
     }
 
-    public SerializationMethods(Action<CodeBuilder> serializeMethod, Action<CodeBuilder> deserializeMethod) {
-        this.serializeMethod = serializeMethod;
-        this.deserializeMethod = deserializeMethod;
+    public SerializationMethods(Action<CodeBuilder> constructMethod, Action<CodeBuilder> serializeMethod, Action<CodeBuilder> deserializeMethod) {
+        _constructMethod = constructMethod;
+        _serializeMethod = serializeMethod;
+        _deserializeMethod = deserializeMethod;
     }
 
-    private readonly Action<CodeBuilder> serializeMethod;
-    private readonly Action<CodeBuilder> deserializeMethod;
+    private readonly Action<CodeBuilder> _constructMethod;
+    private readonly Action<CodeBuilder> _serializeMethod;
+    private readonly Action<CodeBuilder> _deserializeMethod;
 
-    public void WriteSerializeMethod(CodeBuilder codeBuilder) => serializeMethod(codeBuilder);
+    public void WriteConstructMethod(CodeBuilder codeBuilder) => _constructMethod(codeBuilder);
 
-    public void WriteDeserializeMethod(CodeBuilder codeBuilder) => deserializeMethod(codeBuilder);
+    public void WriteSerializeMethod(CodeBuilder codeBuilder) => _serializeMethod(codeBuilder);
+
+    public void WriteDeserializeMethod(CodeBuilder codeBuilder) => _deserializeMethod(codeBuilder);
 }
