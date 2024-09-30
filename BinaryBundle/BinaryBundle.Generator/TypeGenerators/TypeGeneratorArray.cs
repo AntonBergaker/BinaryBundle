@@ -45,48 +45,52 @@ internal class TypeGeneratorArray : TypeGenerator<TypeGeneratorArray.ArrayTypeDa
 
         if (rank == 1) {
             var indexVariable = "i" + GetDepthNr(depth);
-            return new(
-                (codeBuilder) => {
-                    if (emitData.CanHaveNeighbors) {
-                        codeBuilder.StartBlock();
-                    }
-                    var sizeVariable = GetSizeVariable(depth);
-                    codeBuilder.AddLine($"int {sizeVariable} = {fieldName}.Length;");
-                    EmitWriteCollectionSizeWithLimits(codeBuilder, $"{sizeVariable}", limit);
-
-                    codeBuilder.StartBlock($"for (int {indexVariable} = 0; {indexVariable} < {sizeVariable}; {indexVariable}++)");
-
-                    emitMethods.WriteSerializeMethod(codeBuilder);
-
-                    codeBuilder.EndBlock();
-                    if (emitData.CanHaveNeighbors) {
-                        codeBuilder.EndBlock();
-                    }
-                },
-                (codeBuilder) => {
-                    // So our stored field size doesn't have name conflicts, add a code block
-                    if (emitData.CanHaveNeighbors) {
-                        codeBuilder.StartBlock();
-                    }
-                    var sizeVariable = GetSizeVariable(depth);
-                    EmitReadCollectionSizeWithLimits(codeBuilder, $"{sizeVariable}", limit);
-                    codeBuilder.AddLine($"{fieldName} = BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers({fieldName}, {sizeVariable});");
-
-                    codeBuilder.AddLine($"for (int {indexVariable} = 0; {indexVariable} < {fieldName}.Length; {indexVariable}++) {{");
-                    codeBuilder.Indent();
-
-                    emitMethods.WriteDeserializeMethod(codeBuilder);
-
-                    codeBuilder.Unindent();
-                    codeBuilder.AddLine("}");
-                    if (emitData.CanHaveNeighbors) {
-                        codeBuilder.EndBlock();
-                    }
+            var serialize = (CodeBuilder codeBuilder) => {
+                if (emitData.CanHaveNeighbors) {
+                    codeBuilder.StartBlock();
                 }
-            );
-        } 
-        return new(
-            (codeBuilder) => {
+                var sizeVariable = GetSizeVariable(depth);
+                codeBuilder.AddLine($"int {sizeVariable} = {fieldName}.Length;");
+                EmitWriteCollectionSizeWithLimits(codeBuilder, $"{sizeVariable}", limit);
+
+                codeBuilder.StartBlock($"for (int {indexVariable} = 0; {indexVariable} < {sizeVariable}; {indexVariable}++)");
+
+                emitMethods.WriteSerializeMethod(codeBuilder);
+
+                codeBuilder.EndBlock();
+                if (emitData.CanHaveNeighbors) {
+                    codeBuilder.EndBlock();
+                }
+            };
+            var deserialize = (CodeBuilder codeBuilder, bool isConstruct) => {
+                // So our stored field size doesn't have name conflicts, add a code block
+                if (emitData.CanHaveNeighbors) {
+                    codeBuilder.StartBlock();
+                }
+                var sizeVariable = GetSizeVariable(depth);
+                EmitReadCollectionSizeWithLimits(codeBuilder, $"{sizeVariable}", limit);
+                if (isConstruct) {
+                    codeBuilder.AddLine($"{fieldName} = new {innerTypeName}[{sizeVariable}];");
+                } else {
+                    codeBuilder.AddLine($"{fieldName} = BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers({fieldName}, {sizeVariable});");
+                }
+
+                codeBuilder.AddLine($"for (int {indexVariable} = 0; {indexVariable} < {fieldName}.Length; {indexVariable}++) {{");
+                codeBuilder.Indent();
+
+                emitMethods.WriteConstructMethod(codeBuilder);
+
+                codeBuilder.Unindent();
+                codeBuilder.AddLine("}");
+                if (emitData.CanHaveNeighbors) {
+                    codeBuilder.EndBlock();
+                }
+            };
+
+            return new((code) => deserialize(code, true), serialize, (code) => deserialize(code, false));
+        }
+        {
+            var serialize = (CodeBuilder codeBuilder) => {
                 for (int i = 0; i < rank; i++) {
                     codeBuilder.AddLine($"{BinaryBundleGenerator.WriteSizeMethodName}(writer, {fieldName}.GetLength({i}));");
                 }
@@ -104,18 +108,36 @@ internal class TypeGeneratorArray : TypeGenerator<TypeGeneratorArray.ArrayTypeDa
                     codeBuilder.Unindent();
                     codeBuilder.AddLine("}");
                 }
-            },
-            (codeBuilder) => {
+            };
+            var deserialize = (CodeBuilder codeBuilder, bool isConstruct) => {
                 // So our stored field size doesn't have name conflicts, add a code block
-                codeBuilder.AddLine(
-                    $"{fieldName} = BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers({fieldName},");
-                codeBuilder.Indent();
-                for (int i = 0; i < rank; i++) {
-                    codeBuilder.AddLine($"{BinaryBundleGenerator.ReadSizeMethodName}(reader) " + (i + 1 == rank ? "" : ","));
-                }
+                if (isConstruct) {
+                    // haha fuck me
+                    var innerWithoutParams = innerTypeName;
+                    var introParams = "";
+                    while (innerWithoutParams.EndsWith("[]")) {
+                        introParams += "[]";
+                        innerWithoutParams = innerWithoutParams.Substring(0, innerTypeName.Length-2);
+                    }
+                    codeBuilder.AddLine($"{fieldName} = new {innerWithoutParams}[");
+                    codeBuilder.Indent();
+                    for (int i = 0; i < rank; i++) {
+                        codeBuilder.AddLine($"{BinaryBundleGenerator.ReadSizeMethodName}(reader) " + (i + 1 == rank ? "" : ","));
+                    }
 
-                codeBuilder.Unindent();
-                codeBuilder.AddLine(");");
+                    codeBuilder.Unindent();
+                    codeBuilder.AddLine($"]{introParams};");
+                } else {
+                    codeBuilder.AddLine(
+                        $"{fieldName} = BinaryBundle.BinaryBundleHelpers.CreateArrayIfSizeDiffers({fieldName},");
+                    codeBuilder.Indent();
+                    for (int i = 0; i < rank; i++) {
+                        codeBuilder.AddLine($"{BinaryBundleGenerator.ReadSizeMethodName}(reader) " + (i + 1 == rank ? "" : ","));
+                    }
+
+                    codeBuilder.Unindent();
+                    codeBuilder.AddLine(");");
+                }
 
                 for (int i = 0; i < rank; i++) {
                     string iteratorVariable = (char)('i' + i) + GetDepthNr(depth); ;
@@ -130,8 +152,10 @@ internal class TypeGeneratorArray : TypeGenerator<TypeGeneratorArray.ArrayTypeDa
                     codeBuilder.Unindent();
                     codeBuilder.AddLine("}");
                 }
-            }
-        );
+            };
+
+            return new(code => deserialize(code, true), serialize, code => deserialize(code, false));
+        }
     }
 
     private string GetDepthNr(int depth) {

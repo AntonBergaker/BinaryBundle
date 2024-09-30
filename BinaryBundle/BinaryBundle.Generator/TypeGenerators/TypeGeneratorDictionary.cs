@@ -58,7 +58,7 @@ internal class TypeGeneratorDictionary : TypeGenerator<TypeGeneratorDictionary.D
         var keyEmitData = _generators.EmitMethods(keyFieldData, new(depth + 1, false), context);
         var valueEmitData = _generators.EmitMethods(valueFieldData, new(depth + 1, false), context);
 
-        return new((code) => {
+        var serialize = (CodeBuilder code) => {
             if (canHaveNeighbors) {
                 code.StartBlock();
             }
@@ -88,28 +88,31 @@ internal class TypeGeneratorDictionary : TypeGenerator<TypeGeneratorDictionary.D
             if (canHaveNeighbors) {
                 code.EndBlock();
             }
-        }, (code) => {
-            if (canHaveNeighbors) {
-                code.StartBlock();
-            }
-
+        };
+        var deserialize = (CodeBuilder code) => {
             EmitReadCollectionSizeWithLimits(code, sizeVariable, limitData);
 
-            code.AddLine($"{fieldName}.Clear();");
             code.StartBlock($"for (int {indexVariable} = 0; {indexVariable} < {sizeVariable}; {indexVariable}++)");
 
-            code.AddLine($"{keyType} {keyFieldData.FieldName} = default;");
-            keyEmitData.WriteDeserializeMethod(code);
+            code.AddLine($"{keyType} {keyFieldData.FieldName};");
+            keyEmitData.WriteConstructMethod(code);
 
-            code.AddLine($"{valueType} {valueFieldData.FieldName} = default;");
-            valueEmitData.WriteDeserializeMethod(code);
+            code.AddLine($"{valueType} {valueFieldData.FieldName};");
+            valueEmitData.WriteConstructMethod(code);
 
             code.AddLine($"{fieldName}.Add({keyFieldData.FieldName}, {valueFieldData.FieldName});");
             code.EndBlock();
+        };
 
-            if (canHaveNeighbors) {
-                code.EndBlock();
+        return new(
+            (CodeBuilder code) => {
+                code.AddLine($"{fieldName} = new Dictionary<{keyType}, {valueType}>()");
+                deserialize(code);
             }
-        });
+            , serialize, 
+            (CodeBuilder code) => {
+                code.AddLine($"{fieldName}.Clear();");
+                deserialize(code);
+            });
     }
 }

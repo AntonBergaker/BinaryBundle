@@ -44,35 +44,36 @@ internal class TypeGeneratorTuple : TypeGenerator<TypeGeneratorTuple.TupleTypeDa
 
     public override SerializationMethods EmitMethods(TupleTypeData typeData, CurrentEmitData emitData, EmitContext context) {
         var (fieldName, elements) = typeData;
-        var depth = emitData.Depth; ;
-        return new(
-            (code) => {
-                if (emitData.CanHaveNeighbors) {
-                    code.StartBlock();
-                }
-                code.AddLine($"var ({string.Join(", ", elements.Select(x => x.typeData.FieldName))}) = {fieldName};");
-                foreach (var element in elements) {
-                    var methods = _generators.EmitMethods(element.typeData, new(depth + 1, true), context);
-                    methods.WriteSerializeMethod(code);
-                }
-                if (emitData.CanHaveNeighbors) {
-                    code.EndBlock();
-                }
-            },
-            (code) => {
-                if (emitData.CanHaveNeighbors) {
-                    code.StartBlock();
-                }
-                foreach (var element in elements) {
-                    code.AddLine($"{element.typeName} {element.typeData.FieldName} = default;");
-                    var methods = _generators.EmitMethods(element.typeData, new(depth + 1, true), context);
-                    methods.WriteDeserializeMethod(code);
-                }
-                code.AddLine($"{fieldName} = ({string.Join(", ", elements.Select(x => x.typeData.FieldName))});");
-                if (emitData.CanHaveNeighbors) {
-                    code.EndBlock();
-                }
+        var depth = emitData.Depth;
+
+        var serialize = (CodeBuilder code) => {
+            if (emitData.CanHaveNeighbors) {
+                code.StartBlock();
             }
-        );
+            code.AddLine($"var ({string.Join(", ", elements.Select(x => x.typeData.FieldName))}) = {fieldName};");
+            foreach (var element in elements) {
+                var methods = _generators.EmitMethods(element.typeData, new(depth + 1, true), context);
+                methods.WriteSerializeMethod(code);
+            }
+            if (emitData.CanHaveNeighbors) {
+                code.EndBlock();
+            }
+        };
+        var deserialize = (CodeBuilder code) => {
+            if (emitData.CanHaveNeighbors) {
+                code.StartBlock();
+            }
+            foreach (var element in elements) {
+                code.AddLine($"{element.typeName} {element.typeData.FieldName} = default;");
+                var methods = _generators.EmitMethods(element.typeData, new(depth + 1, true), context);
+                methods.WriteDeserializeMethod(code);
+            }
+            code.AddLine($"{fieldName} = ({string.Join(", ", elements.Select(x => x.typeData.FieldName))});");
+            if (emitData.CanHaveNeighbors) {
+                code.EndBlock();
+            }
+        };
+
+        return new(deserialize, serialize, deserialize);
     }
 }

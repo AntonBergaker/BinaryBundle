@@ -10,7 +10,7 @@ internal class TypeGeneratorTypeExtension : TypeGenerator<TypeGeneratorTypeExten
         string serialize = $"{methods.SerializationMethodName}(writer, {fieldName});";
         string deserialize = $"{fieldName} = {methods.DeserializationMethodName}(reader);";
 
-        return new SerializationMethods(serialize, deserialize);
+        return new SerializationMethods(deserialize, serialize, deserialize);
     }
 
     public override bool TryGetFieldData(CurrentFieldData currentField, FieldDataContext context, out TypeDataTypeExtension? result) {

@@ -30,9 +30,38 @@ internal class TypeGeneratorSerializable : TypeGenerator<TypeGeneratorSerializab
 
         var serialize = (CodeBuilder code) => code.AddLine($"{fieldName}.Serialize(writer);");
         var deserialize = (CodeBuilder code) => code.AddLine($"{fieldName}.Deserialize(reader);");
+        
+        var tempVariable = GetTempVariable(emitData.Depth);
+
+        var constructorType = BundleConstructorType.NoConstructor;
+        if (context.BundledTypes.TryGetValue(typeName, out var foundTypeData)) {
+            constructorType = foundTypeData.ConstructorType;
+        }
+
+        var construct = (CodeBuilder code) => {
+            if (emitData.CanHaveNeighbors) {
+                code.StartBlock();
+            }
+
+            if (constructorType == BundleConstructorType.NoConstructor) {
+                code.AddLine($"{typeName} {tempVariable} = default;");
+                code.AddLine($"{tempVariable}.Deserialize(reader);");
+                code.AddLine($"{fieldName} = {tempVariable};");
+            } else if (constructorType == BundleConstructorType.EmptyConstructor) {
+                code.AddLine($"{typeName} {tempVariable} = new();");
+                code.AddLine($"{tempVariable}.Deserialize(reader);");
+                code.AddLine($"{fieldName} = {tempVariable};");
+            } else if (constructorType == BundleConstructorType.FieldConstructor) {
+                code.AddLine($"{fieldName} = {typeName}.ConstructFromBuffer(reader);");
+            }
+
+
+            if (emitData.CanHaveNeighbors) {
+                code.EndBlock();
+            }
+        };
 
         if (shouldBeReassigned) {
-            string tempVariable = GetTempVariable(emitData.Depth);
             deserialize = (code) => {
                 if (emitData.CanHaveNeighbors) {
                     code.StartBlock();
@@ -46,6 +75,6 @@ internal class TypeGeneratorSerializable : TypeGenerator<TypeGeneratorSerializab
             };
         }
 
-        return new SerializationMethods(serialize, deserialize);
+        return new SerializationMethods(construct, serialize, deserialize);
     }
 }

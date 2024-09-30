@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.CodeAnalysis;
+﻿using System.Collections.Generic;
 
 namespace BinaryBundle.Generator.TypeGenerators;
 
@@ -31,7 +29,7 @@ internal class TypeGeneratorPrimitive : TypeGenerator<TypeGeneratorPrimitive.Pri
         string serialize = $"writer.Write{typeData.MethodName}({typeData.FieldName});";
         string deserialize = $"{typeData.FieldName} = reader.Read{typeData.MethodName}();";
 
-        return new(serialize, deserialize);
+        return new(deserialize, serialize, deserialize);
     }
 
     public override bool TryGetFieldData(CurrentFieldData currentField, FieldDataContext context, out PrimitiveTypeData? result) {

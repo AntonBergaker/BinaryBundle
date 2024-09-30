@@ -51,7 +51,7 @@ internal class TypeGeneratorEnum : TypeGenerator<TypeGeneratorEnum.EnumTypeData>
         string serialize = $"writer.Write{typeData.MethodName}(({typeData.UnderlyingType}){typeData.FieldName});";
         string deserialize = $"{typeData.FieldName} = ({typeData.EnumName})reader.Read{typeData.MethodName}();";
 
-        return new(serialize, deserialize);
+        return new(deserialize, serialize, deserialize);
 
     }
 }

@@ -28,11 +28,13 @@ public partial class BinaryBundleGenerator {
         CancellationToken token) {
 
         var classType = GetBundleClassType(classTypeSymbol);
+        var constructorType = BundleConstructorType.NoConstructor;
 
         HashSet<string> autoBackedProperties = new(
             classTypeSymbol.GetMembers().OfType<IFieldSymbol>().Where(x => x.AssociatedSymbol != null).Select(x => x.AssociatedSymbol!.Name)
         );
         List<FieldTypeData> members = [];
+        List<IMethodSymbol>? maybeConstructors = null;
 
         foreach (var member in classTypeSymbol.GetMembers()) {
             if (Utils.HasAttribute(member, IgnoreAttributeName)) {
@@ -79,9 +81,51 @@ public partial class BinaryBundleGenerator {
                     members.Add(result!);
                 }
             }
+
+            else if (member is IMethodSymbol method) {
+                if (method.MethodKind != MethodKind.Constructor) {
+                    continue;
+                }
+                if (method.Parameters.Length == 0) {
+                    if (constructorType == BundleConstructorType.NoConstructor) {
+                        constructorType = BundleConstructorType.EmptyConstructor;
+                    }
+                    continue;
+                }
+
+                maybeConstructors ??= [];
+                maybeConstructors.Add(method);
+            }
+        }
+
+        (string Name, string Type)[]? constructorParameters = null;
+        if (maybeConstructors != null) {
+            foreach (var constructor in maybeConstructors) {
+                if (constructor.Parameters.Length != members.Count) {
+                    continue;
+                }
+
+                bool allValidParameters = true;
+                var memberNames = new HashSet<string>(members.Select(x => x.FieldName.ToLowerInvariant().Trim('_')));
+                foreach (var parameter in constructor.Parameters) {
+                    var parameterName = parameter.Name.ToLowerInvariant().Trim('@');
+                    if (memberNames.Remove(parameterName) == false) {
+                        allValidParameters = false;
+                        break;
+                    }
+                }
+                if (allValidParameters == false) {
+                    continue;
+                }
+
+                constructorType = BundleConstructorType.FieldConstructor;
+                constructorParameters = constructor.Parameters.Select(x => (x.Name, x.Type.ToString())).ToArray();
+                break;
+            }
         }
 
         StringBuilder? @namespace = null;
+
         var containingNamespace = classTypeSymbol.ContainingNamespace;
         while (containingNamespace != null) {
             if (@namespace == null) {
@@ -110,8 +154,9 @@ public partial class BinaryBundleGenerator {
         }
 
         return new(Name: classTypeSymbol.Name, Namespace: @namespace?.ToString(), 
-            InheritsSerializable: inheritsSerializable, IsSealed: classTypeSymbol.IsSealed, classType, 
-            parents?.ToArray() ?? [], members.ToArray());
+            InheritsSerializable: inheritsSerializable, IsSealed: classTypeSymbol.IsSealed,
+            classType, constructorType, 
+            parents?.ToArray() ?? [], members.ToArray(), constructorParameters);
     }
 
     private BundleClassType GetBundleClassType(ITypeSymbol symbol) {
