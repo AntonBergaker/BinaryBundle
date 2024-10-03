@@ -4,7 +4,7 @@ using NUnit.Framework;
 
 namespace UnitTests; 
 
-internal class HelpersTest {
+internal class HelpersTests {
 
     [Test]
     public void CollectionSizeWritingRandomNumbers() {

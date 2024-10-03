@@ -146,7 +146,7 @@ internal class TypeGeneratorArray : TypeGenerator<TypeGeneratorArray.ArrayTypeDa
                     codeBuilder.Indent();
                 }
 
-                emitMethods.WriteDeserializeMethod(codeBuilder);
+                emitMethods.WriteConstructMethod(codeBuilder);
 
                 for (int i = 0; i < rank; i++) {
                     codeBuilder.Unindent();

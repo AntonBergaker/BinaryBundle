@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace UnitTests;
 
-internal partial class InheritanceTest {
+internal partial class InheritanceTests {
 
     [BinaryBundle]
     partial class ParentClass {
