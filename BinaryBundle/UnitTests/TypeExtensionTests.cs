@@ -4,7 +4,7 @@ using NUnit.Framework;
 
 namespace UnitTests; 
 
-internal partial class TypeExtensionTest {
+internal partial class TypeExtensionTests {
     [BinaryBundle]
     public partial class VectorClass {
         public Vector2 VectorField;

@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace UnitTests; 
 
-internal partial class PropertiesTest {
+internal partial class PropertiesTests {
 
     [BinaryBundle]
     public partial class SimplePropertyClass {

@@ -8,7 +8,7 @@ partial class SimpleClass {
     public int IntField;
 }
 
-public partial class BinarySerializationTest {
+public partial class BinarySerializationTests {
 
     [Test]
     public void SimpleSerialization() {

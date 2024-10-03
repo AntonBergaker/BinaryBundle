@@ -1,8 +1,9 @@
 ﻿using BinaryBundle;
 using NUnit.Framework;
+using System;
 
 namespace UnitTests;
-public partial class ConstructorTest {
+public partial class ConstructorTests {
 
     [BinaryBundle]
     public partial class IntWrapper {
@@ -41,5 +42,27 @@ public partial class ConstructorTest {
         var deserializedClass = TestUtils.MakeSerializedCopy(intArray);
         Assert.AreEqual(intArray.Wrappers.Length, deserializedClass.Wrappers.Length);
         Assert.AreEqual(intArray.Wrappers[0].Int, deserializedClass.Wrappers[0].Int);
+    }
+
+    [BinaryBundle]
+    public partial class PrimaryConstructorClass(int myInt, string myString)
+    {
+        public int MyInt { get; private set; } = myInt;
+        public string MyString { get; private set; } = myString;
+    }
+
+    [Test]
+    public void PrimaryConstructor() {
+        var simpleConstructor = new PrimaryConstructorClass(123, "hello");
+
+        var buffer = new byte[0x20];
+        BundleDefaultWriter writer = new BundleDefaultWriter(buffer);
+
+        simpleConstructor.Serialize(writer);
+
+        BundleDefaultReader reader = new BundleDefaultReader(buffer);
+        var constructed = PrimaryConstructorClass.ConstructFromBuffer(reader);
+        Assert.AreEqual(simpleConstructor.MyInt, constructed.MyInt);
+        Assert.AreEqual(simpleConstructor.MyString, constructed.MyString);
     }
 }
